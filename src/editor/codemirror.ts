@@ -4,6 +4,7 @@ import { parser } from "./notation.js";
 import { TreeBuffer, Tree, TreeCursor } from "lezer-tree";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { EditorState, Compartment } from "@codemirror/state";
+import { updateScore } from "../score/score";
 
 function printTree(c: TreeCursor, content: string, indent: number = 0) {
     if (c.name != "SourceFile")
@@ -19,6 +20,7 @@ function parseDoc(content: string) {
     const tree = parser.parse(content) as Tree;
     const tp = tree.cursor();
     printTree(tp, content);
+    updateScore(tp, content);
 }
 
 const tabSize = new Compartment();

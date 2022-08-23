@@ -5,3 +5,27 @@
 html {
     font-size: 200%;
 }
+
+
+@font-face {
+    font-family: edwin;
+    src: url("./fonts/edwin/Edwin-Roman.otf");
+}
+
+.edwin {
+    font-family: edwin;
+    //vertical-align: text-top;
+    font-size: 30px;
+}
+
+
+@font-face {
+    font-family: bravura;
+    src: url("./fonts/bravura/Bravura.otf");
+}
+
+.bravura {
+    font-family: bravura;
+    //vertical-align: text-bottom;
+    font-size: 30px;
+}
