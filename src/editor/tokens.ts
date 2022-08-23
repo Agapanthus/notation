@@ -158,6 +158,7 @@ function combineSurrogates(input, offset) {
     return s;
 }
 
+// TODO: Prohibit function names that only contain abcdefgh and numbers!
 export const Identifier = new ExternalTokenizer((input, stack) => {
     let start = true;
     let ok = true;

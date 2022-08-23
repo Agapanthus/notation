@@ -9,6 +9,33 @@ import {
 } from "@codemirror/language";
 import { styleTags, tags as t } from "@lezer/highlight";
 
+import { syntaxTree } from "@codemirror/language";
+import { linter, Diagnostic } from "@codemirror/lint";
+
+export const lezerLinter = linter((view) => {
+    let diagnostics: Diagnostic[] = [];
+    syntaxTree(view.state)
+        .cursor()
+        .iterate((node) => {
+            if (node.name == "⚠")
+                diagnostics.push({
+                    from: node.from,
+                    to: node.to,
+                    severity: "error",
+                    message: "Syntax error",
+                    actions: [
+                        {
+                            name: "Remove",
+                            apply(view, from, to) {
+                                view.dispatch({ changes: { from, to } });
+                            },
+                        },
+                    ],
+                });
+        });
+    return diagnostics;
+});
+
 let parserWithMetadata = parser.configure({
     props: [
         styleTags({
@@ -19,8 +46,12 @@ let parserWithMetadata = parser.configure({
             BlockComment: t.blockComment,
             Number: t.number,
             Identifier: t.name,
+            
             function: t.keyword,
+            melody: t.keyword,
+            rhythm: t.keyword,
             end: t.keyword,
+
             "( )": t.paren,
         }),
         /*indentNodeProp.add({

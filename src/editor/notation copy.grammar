@@ -35,21 +35,17 @@
   }
   
   @top SourceFile {
-    topLevelList<e, pe> | ""
+    expressionList<e, pe> | ""
   }
   
   @skip { whitespace | Comment | BlockComment }
   
   // TOP LEVEL
-
-  topLevelList<e, pe>{
-    definition | CompoundExpression | FunctionAssignmentExpression
-  }
   
   expressionList<e, pe> {
-    (e ~id | AssignmentExpression<e> | FunctionAssignmentExpression )
+    (e ~id | BareTupleExpression<e> | AssignmentExpression<e> | FunctionAssignmentExpression)
     (!regular0 terminator
-      (!regular0 e | AssignmentExpression<e> | FunctionAssignmentExpression ))*
+      (!regular0 e | BareTupleExpression<e> | AssignmentExpression<e> | FunctionAssignmentExpression))*
     terminator?
   }
   
@@ -76,20 +72,28 @@
   
   FunctionAssignmentExpression[@dynamicPrecedence=2] {
     Identifier ~id immediateParen !call ArgumentList<e, pe> ~id
+    (kw<"where"> TypeArgumentList<e>)?
     !assign (assignOperator | "=")
     !assign (e | AssignmentExpression<e>)
   }
-
   
   // STATEMENTS
   
   statement {
     IfStatement |
+    TryStatement |
     ForStatement |
     WhileStatement |
+    LetStatement |
+    ConstStatement |
+    GlobalStatement |
+    LocalStatement |
+    QuoteStatement |
     BreakStatement |
     ContinueStatement |
-    ReturnStatement
+    ReturnStatement |
+    ImportStatement |
+    ExportStatement
   }
   
   IfStatement[closedBy="end else elseif"] {
@@ -107,6 +111,24 @@
   
   ElseClause[closedBy="end"] {
     kw<"else">
+      expressionList<e, pe>?
+  }
+  
+  TryStatement[closedBy="end catch finally"] {
+    kw<"try">
+      expressionList<e, pe>?
+    CatchClause?
+    FinallyClause?
+    end
+  }
+  
+  CatchClause[closedBy="end finally"] {
+    kw<"catch"> Identifier? !regular1 terminator?
+      expressionList<e, pe>?
+  }
+  
+  FinallyClause[closedBy="end"] {
+    kw<"finally"> terminator?
       expressionList<e, pe>?
   }
   
@@ -132,75 +154,76 @@
     kw<"return"> (!right-2 (e | BareTupleExpression<e>))?
   }
   
-  
-  VariableDeclaration {
-    (Identifier ) (!right0 "=" e)?
+  LetStatement[closedBy="end"] {
+    kw<"let"> VariableDeclaration ("," VariableDeclaration)* terminator? expressionList<e, pe>? end
   }
   
+  ConstStatement {
+    kw<"const"> (VariableDeclaration (!right0 "," VariableDeclaration)*)
+  }
+  
+  GlobalStatement {
+    kw<"global"> (VariableDeclaration (!right0 "," VariableDeclaration)*)
+  }
+  
+  LocalStatement {
+    kw<"local"> (VariableDeclaration (!right0 "," VariableDeclaration)*)
+  }
+  
+  VariableDeclaration {
+    (Identifier | InterpolationExpression<pe>) (!right0 "=" e)?
+  }
+  
+  QuoteStatement[closedBy="end"] {
+    kw<"quote"> expressionList<e, pe>? end
+  }
+  
+  ImportStatement {
+    !right0 (kw<"using"> | kw<"import">)
+    !right0 (Import | SelectedImport)
+  }
+  
+  Import {
+    (Identifier | ScopedIdentifier | RenamedIdentifier)
+    (!right0 "," (Identifier | ScopedIdentifier | RenamedIdentifier))*
+  }
+  
+  SelectedImport[@dynamicPrecedence=1] {
+    (Identifier | ScopedIdentifier)
+    !immediate immediateColon ":"
+    list {
+      (RenamedImport | Identifier | MacroIdentifier | Operator)
+      (!right0 "," !right0 (RenamedImport | Identifier | MacroIdentifier | Operator))*
+    }
+  }
+  
+  RenamedIdentifier {
+    (Identifier | ScopedIdentifier) kw<"as"> Identifier
+  }
+  
+  RenamedImport {
+    (Identifier | ScopedIdentifier | MacroIdentifier | Operator) kw<"as"> (Identifier | MacroIdentifier | Operator)
+  }
+  
+  ExportStatement {
+    kw<"export"> Identifier (!right0 "," Identifier)*
+  }
   
   
   // DEFINITIONS
   
   definition {
-    FunctionDefinition | InstrumentVoice
-  }
-
-  InstrumentVoice[closedBy="\n"] {
-    Identifier ":" BarList terminator
-  }
-
-
-  BarList {
-    Bar (BarLine Bar)*
-  }
-
-  BarLine {
-    "|" | "|:" | ":|" | "||" | "𝄀" | "𝄁" | "𝄂" | "𝄃" | "𝄄" | "𝄅" | "𝄆" | "𝄇"
-  }
-
-  Bar {
-    (Chord | Tone | Duration | Rest | SpecificRest)*
-  }
-
-  Chord {
-    "cmin"
-  }
-
-  Tone {
-    Accidental? ToneInOctave ToneOctave
-  }
-
-  // https://en.wikipedia.org/wiki/Musical_Symbols_(Unicode_block)
-  ToneInOctave {
-    "a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"
-  }
-
-  ToneOctave {
-    Integer?|","*|"'"*
+    PrimitiveDefinition |
+    AbstractDefinition |
+    StructDefinition |
+    ModuleDefinition |
+    BareModuleDefinition |
+    MacroDefinition |
+    FunctionDefinition
   }
   
-  Accidental {
-    "+"+|"-"+|"♭"+|"♯"+|"𝄪"|"𝄫"|"𝄭"|"𝄯"|"𝄮"|"𝄰"|"𝄱"|"𝄲"|"𝄳"
-  }
-
-  Rest {
-    "r" 
-  }
-  
-  SpecificRest {
-    ("𝄺"|"𝄻"|"𝄼"|"𝄽"|"𝄾"|"𝄿"|"𝅀"|"𝅁"|"𝅂") Dots?
-  }
-
-  Duration {
-    (("/" ("0"|"1"|"2"|"4"|"8"|"16"|"32"|"64"|"128")) | "𝅜"|"𝅝"|"𝅗𝅥"|"♩"|"♪"|"𝅘𝅥𝅯"|"𝅘𝅥𝅰"|"𝅘𝅥𝅱"|"𝅘𝅥𝅲"|"♬"|"♫") Dots?
-  }
-
-  Dots {
-    "."+
-  }
-
   FunctionDefinition[closedBy="end"] {
-    !regular0 (kw<"function"> | kw<"melody"> | kw<"rhythm">)
+    !regular0 kw<"function">
       definitionHead
       params[@dynamicPrecedence=1] {
         !immediate immediateParen !immediate ArgumentList<e, pe>
@@ -210,9 +233,46 @@
       }?
       expressionList<e, pe>? 
     end
-  }  
+  }
+  
+  MacroDefinition[closedBy="end"] {
+    kw<"macro"> definitionHead immediateParen ArgumentList<e, pe>
+      expressionList<e, pe>?
+    end
+  }
+  
+  
+  PrimitiveDefinition[closedBy="end"] {
+    kw<"primitive"> kw<"type"> pe Number end
+  }
+  
+  
+  AbstractDefinition[closedBy="end"] {
+    kw<"abstract"> kw<"type"> pe end
+  }
+  
+  StructDefinition[closedBy="end"] {
+    kw<"mutable">? kw<"struct"> pe !regular0 expressionList<e, pe>? end
+  }
+  
+  ModuleDefinition[closedBy="end"] {
+    kw<"module"> Identifier
+      expressionList<e, pe>? 
+    end
+  }
+  
+  BareModuleDefinition[closedBy="end"] {
+    kw<"baremodule"> Identifier
+      expressionList<e, pe>?
+    end
+  }
   
   definitionHead {
+    InterpolationExpression<definitionHead> |
+    FieldExpression<definitionHead> |
+    SubscriptExpression<definitionHead> |
+    QuoteExpression<definitionHead> |
+    ParameterizedIdentifier<e, definitionHead> |
     Identifier ~id |
     ParenthesizedExpression<definitionHead> |
     Operator ~op
@@ -223,25 +283,130 @@
   
   e {
     statement |
+    definition |
     CompoundExpression |
+    PairExpression<e> |
+    MacroExpression<e, pe> |
     UnaryExpression<e> |
     BinaryExpression<e> |
     TernaryExpression<e> |
     FunctionExpression<e, pe> |
     FunctionExpression[closedBy="end"] { verboseFunctionExpression } |
+    CoefficientExpression<e> |
+    RangeExpression<e> |
+    SpreadExpression<e> |
     Operator[group="operator"] { ":" ~op } |
     pe
   }
   
   pe {
+    InterpolationExpression<pe> |
+    FieldExpression<pe> |
+    SubscriptExpression<pe> |
+    QuoteExpression<pe> |
     CallExpression<e, pe> |
     Identifier ~id |
+    Character |
     Number |
-    Integer |
+    Symbol |
     String |
-    TupleExpression<e, pe> |
+    TripleString |
+    CommandString |
+    PrefixedString |
     ParenthesizedExpression<e> |
+    TupleExpression<e, pe> |
+    ArrayExpression<e> |
+    ArrayComprehensionExpression<e, pe> |
+    MatrixExpression<e> |
+    GeneratorExpression<e, pe> |
+    TypedExpression<pe> |
+    ParameterizedIdentifier<e, pe> |
     Operator ~op
+  }
+  
+  ParameterizedIdentifier<e, pe> {
+    pe
+    !immediate immediateBrace !immediate
+    TypeArgumentList<e>
+  }
+  
+  TypeArgumentList[closedBy="}"]<e> {
+    "{" e ("," e)* ","? "}"
+  }
+  
+  FieldExpression<pe> {
+    pe
+    !immediate immediateDot !dot "." !dot
+    (Identifier | QuoteExpression<pe> | InterpolationExpression<pe>)
+  }
+  
+  
+  SubscriptExpression[closedBy="]"]<pe> {
+    pe !immediate immediateBracket "["
+      (
+        GeneratorExpression { s_e comprehensionClause<s_e, s_pe> } |
+        (s_e |
+         AssignmentExpression {
+           s_e !assign (assignOperator | "=") s_e
+         })
+        ("," (s_e |
+              AssignmentExpression {
+                s_e !assign (assignOperator | "=") s_e
+              }))*
+      )?
+      ","?
+    "]"
+  }
+  
+  s_e {
+    statement |
+    definition |
+    CompoundExpression |
+    PairExpression<s_e> |
+    MacroExpression<s_e, s_pe> |
+    UnaryExpression<s_e> |
+    BinaryExpression<s_e> |
+    TernaryExpression<s_e> |
+    FunctionExpression<s_e, s_pe> |
+    CoefficientExpression<s_e> |
+    RangeExpression<s_e> |
+    SpreadExpression<s_e> |
+    Operator[group="operator"] { ":" ~op } |
+    s_pe
+  }
+  
+  s_pe {
+    InterpolationExpression<s_pe> |
+    FieldExpression<s_pe> |
+    SubscriptExpression<s_pe> |
+    QuoteExpression<s_pe> |
+    CallExpression<s_e, s_pe> |
+    Identifier ~id |
+    Character |
+    Number |
+    Symbol |
+    String |
+    TripleString |
+    CommandString |
+    PrefixedString |
+    ParenthesizedExpression<s_e> |
+    TupleExpression<s_e, s_pe> |
+    ArrayExpression<s_e> |
+    ArrayComprehensionExpression<s_e, s_pe> |
+    MatrixExpression<s_e> |
+    GeneratorExpression<s_e, s_pe> |
+    TypedExpression<s_pe> |
+    ParameterizedIdentifier<s_e, s_pe> |
+    Operator ~op |
+    kw<"end">
+  }
+
+  SpreadExpression<pe> {
+    pe !dot "..."
+  }
+  
+  PairExpression<e> {
+    e !pair "=>" e
   }
   
   TernaryExpression<e> {
@@ -252,6 +417,26 @@
     e
   }
   
+  TypedExpression<pe> {
+    pe !typeascription ("::" | "<:") !typeascription pe |
+    ("::" | "<:") !typeonlyascription pe
+  }
+  
+  InterpolationExpression[@dynamicPrecedence=2]<pe> {
+    "$" !interp pe
+  }
+  
+  Symbol {
+    ":" !interp Identifier
+  }
+  
+  QuoteExpression[@dynamicPrecedence=2]<pe> {
+    ":" !interp pe
+  }
+  
+  CoefficientExpression[@dynamicPrecedence=1]<e> {
+    Number !coeff (ParenthesizedExpression<e> | Identifier)
+  }
   
   CompoundExpression[closedBy="end"] {
     kw<"begin"> expressionList<e, pe> end
@@ -298,7 +483,17 @@
   }
   
   NamedField<e, pe> {
-    name { Identifier  } ~id !assign "=" e
+    name { Identifier | TypedExpression<pe> } ~id !assign "=" e
+  }
+  
+  MacroIdentifier {
+    !regular0 "@" (Identifier | Operator | Operator[group="operator"] { "." })
+  }
+  
+  MacroFieldExpression<pe> {
+    pe
+    !immediate immediateDot !dot "." !dot
+    MacroIdentifier
   }
   
   verboseFunctionExpression {
@@ -307,6 +502,17 @@
   
   FunctionExpression<e, pe> {
     (Identifier ~id | ArgumentList<e, pe>) !arrow "->" (e | AssignmentExpression<e>)
+  }
+  
+  MacroExpression<e, pe> {
+    (MacroIdentifier | MacroFieldExpression<pe>) (!right0
+      immediateParen args[@dynamicPrecedence=1] { ArgumentList<e, pe> }
+      | MacroArgumentList<e>
+    )?
+  }
+  
+  MacroArgumentList<e> {
+    (!regular-2 (e | AssignmentExpression<e>))+
   }
   
   BinaryExpression<e> {
@@ -339,6 +545,38 @@
     )
   }
   
+  ArrayExpression[closedBy="]"]<e> {
+    !regular0 "[" "]" |
+    !regular0 "["
+      !regular0 e
+      ("," e)*?
+      (!regular0 ",")?
+      !regular0 "]"
+  }
+  
+  MatrixExpression[closedBy="]"]<e> {
+    "["
+      !regular-1 MatrixRow<e>
+      (";" MatrixRow<e>)* 
+      (!regular-1 ";")?
+      !regular-1 "]"
+  }
+  
+  MatrixRow<e> {
+    (!regular-1 e)+
+  }
+  
+  ArrayComprehensionExpression[closedBy="]"]<e, pe> {
+    "[" !regular0 e !regular0 comprehensionClause<e, pe> "]"
+  }
+  
+  GeneratorExpression[closedBy=")"]<e, pe> {
+    "(" e comprehensionClause<e, pe> ")"
+  }
+  
+  comprehensionClause<e, pe> {
+    ForClause<e, pe> (ForClause<e, pe> | IfClause<e, pe>)*
+  }
   
   IfClause<e, pe> {
     kw<"if"> e
@@ -363,11 +601,26 @@
   
   @skip {} {
     String {
-      '"' (stringContent )* '"'
+      '"' (stringContent | stringInterpolation)* '"'
     }
-   
+    TripleString {
+      '"""' (tripleStringContent | stringInterpolation)* '"""'
+    }
+    CommandString {
+      "`" (commandStringContent | stringInterpolation)* "`"
+    }
   }
   
+  stringInterpolation {
+    "$" Identifier |
+    "$" immediateParen "(" !regular1 e !regular1 ")"
+  }
+  
+  PrefixedString {
+    Identifier !immediate immediateDoubleQuote String |
+    Identifier !immediate immediateDoubleQuote TripleString |
+    Identifier !immediate immediateBackquote CommandString
+  }
   
   plusOperator {
     "." !immediate nowhitespace (plusOperatorExtra | plusminus) |
@@ -380,7 +633,9 @@
   @external tokens terminator from "./tokens" { terminator }
   @external tokens Identifier from "./tokens" { Identifier }
   @external tokens BlockComment from "./tokens" { BlockComment }
+  @external tokens tripleStringContent from "./tokens" { tripleStringContent }
   @external tokens stringContent from "./tokens" { stringContent }
+  @external tokens commandStringContent from "./tokens" { commandStringContent }
   @external tokens layoutExtra from "./tokens" {
     immediateParen,
     immediateColon,
@@ -399,17 +654,13 @@
     Comment {
       "#" ![\n]*
     }
-    Integer {
-      $[0-9] $[0-9_]*
-    }
     Number {
-      // not-integer
       (
         "0" $[xX] $[0-9a-fA-F] $[0-9a-fA-F_]* |
-        $[0-9] $[0-9_]* "." ($[0-9] $[0-9_]*)? |
+        $[0-9] $[0-9_]* "."? ($[0-9] $[0-9_]*)? |
         "." $[0-9] $[0-9_]*
       )
-      //($[eE] ("-" | "+")? $[0-9]+)?
+      ($[eE] ("-" | "+")? $[0-9]+)?
     }
     powerOperator {
       "."? ("^" /*| "↑" | "↓" | "⇵" | "⟰" | "⟱" | "⤈" | "⤉" | "⤊" | "⤋" | "⤒" | "⤓" | "⥉" | "⥌" | "⥍" | "⥏" | "⥑" | "⥔" | "⥕" | "⥘" | "⥙" | "⥜" | "⥝" | "⥠" | "⥡" | "⥣" | "⥥" | "⥮" | "⥯" | "￪" | "￬"*/)
@@ -438,6 +689,9 @@
     plusminus {
       "+" | "-"
     }
+    Character {
+      "'" ("\\" !['] | ![']) "'"
+    }
     ternary1 {
       whitespace+ "?" whitespace+
     }
@@ -445,7 +699,6 @@
       whitespace+ ":" whitespace+
     }
     @precedence {
-      Integer,
       Number,
       comparisonOperator,
       "=",

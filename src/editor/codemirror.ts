@@ -1,9 +1,9 @@
 import { basicSetup } from "codemirror";
-import { notation } from "./lang";
+import { notation, lezerLinter } from "./lang";
 import { parser } from "./notation.js";
 import { TreeBuffer, Tree, TreeCursor } from "lezer-tree";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import {EditorState, Compartment} from "@codemirror/state"
+import { EditorState, Compartment } from "@codemirror/state";
 
 function printTree(c: TreeCursor, content: string, indent: number = 0) {
     if (c.name != "SourceFile")
@@ -21,7 +21,7 @@ function parseDoc(content: string) {
     printTree(tp, content);
 }
 
-const tabSize = new Compartment
+const tabSize = new Compartment();
 var view = null as EditorView | null;
 export function createEditor(content: string) {
     view = new EditorView({
@@ -30,11 +30,11 @@ export function createEditor(content: string) {
             notation(),
             EditorView.updateListener.of((v: ViewUpdate) => {
                 if (v.docChanged) {
-                    parseDoc(v.state.doc.toString())
+                    parseDoc(v.state.doc.toString());
                 }
             }),
-            tabSize.of(EditorState.tabSize.of(4))
-
+            tabSize.of(EditorState.tabSize.of(4)),
+            lezerLinter,
         ],
         parent: document.body,
     });
