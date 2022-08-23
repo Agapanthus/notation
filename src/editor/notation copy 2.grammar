@@ -35,15 +35,106 @@
   }
   
   @top SourceFile {
-    topLevelList | ""
+    topLevelList<e, pe> | ""
   }
   
-  @skip { Comment | BlockComment }
+  @skip { whitespace | Comment | BlockComment }
   
   // TOP LEVEL
 
-  topLevelList{
-    definition  | whitespace
+  topLevelList<e, pe>{
+    definition | CompoundExpression | FunctionAssignmentExpression
+  }
+  
+  expressionList<e, pe> {
+    (e ~id | AssignmentExpression<e> | FunctionAssignmentExpression )
+    (!regular0 terminator
+      (!regular0 e | AssignmentExpression<e> | FunctionAssignmentExpression ))*
+    terminator?
+  }
+  
+  BareTupleExpression<e> {
+    e (!regular-1 "," e)+
+  }
+  
+  AssignmentExpression<e> {
+    ((e | BareTupleExpression<e>)
+    !assign (assignOperator | "=")
+    (e | AssignmentExpression<e> | BareTupleExpression<e>))
+  }
+  
+  simpleAssignmentExpression<e> {
+    e ~id !assign (assignOperator | "=") !assign e
+  }
+  
+  simpleExpressionList<e> {
+    (e ~id | AssignmentExpression { simpleAssignmentExpression<e> })
+    (!regular0 terminator
+      (!regular0 e | AssignmentExpression { simpleAssignmentExpression<e> }))*
+    terminator?
+  }
+  
+  FunctionAssignmentExpression[@dynamicPrecedence=2] {
+    Identifier ~id immediateParen !call ArgumentList<e, pe> ~id
+    !assign (assignOperator | "=")
+    !assign (e | AssignmentExpression<e>)
+  }
+
+  
+  // STATEMENTS
+  
+  statement {
+    IfStatement |
+    ForStatement |
+    WhileStatement |
+    BreakStatement |
+    ContinueStatement |
+    ReturnStatement
+  }
+  
+  IfStatement[closedBy="end else elseif"] {
+    kw<"if"> e terminator?
+      expressionList<e, pe>?
+    ElseifClause*
+    ElseClause?
+    end
+  }
+  
+  ElseifClause[closedBy="end else elseif"] {
+    kw<"elseif"> e terminator?
+      expressionList<e, pe>?
+  }
+  
+  ElseClause[closedBy="end"] {
+    kw<"else">
+      expressionList<e, pe>?
+  }
+  
+  ForStatement[closedBy="end"] {
+    !regular0 kw<"for"> ForBinding<e, pe> ("," ForBinding<e, pe>)* terminator?
+      expressionList<e, pe>?
+    end
+  }
+  
+  WhileStatement[closedBy="end"] {
+    !regular0 kw<"while"> !regular0 e !regular0 terminator? !regular0 expressionList<e, pe>? end
+  }
+  
+  BreakStatement {
+    kw<"break">
+  }
+  
+  ContinueStatement {
+    kw<"continue">
+  }
+  
+  ReturnStatement {
+    kw<"return"> (!right-2 (e | BareTupleExpression<e>))?
+  }
+  
+  
+  VariableDeclaration {
+    (Identifier ) (!right0 "=" e)?
   }
   
   
@@ -51,7 +142,7 @@
   // DEFINITIONS
   
   definition {
-     InstrumentVoice
+    FunctionDefinition | InstrumentVoice
   }
 
   InstrumentVoice[closedBy="\n"] {
@@ -68,11 +159,11 @@
   }
 
   Bar {
-    whitespace* (Group (whitespace+ Group)* whitespace*)?
+    ( Group)*
   }
 
   Group {
-    groupMember+
+    groupMember (nowhitespace groupMember)*
   }
 
   groupMember {
@@ -84,7 +175,7 @@
   }
 
   Tone {
-    Accidental? ToneInOctave ToneOctave?
+    (Accidental nowhitespace)? ToneInOctave ToneOctave?
   }
 
   // https://en.wikipedia.org/wiki/Musical_Symbols_(Unicode_block)
@@ -120,6 +211,181 @@
     (  ".")+
   }
 
+  FunctionDefinition[closedBy="end"] {
+    !regular0 (kw<"function"> | kw<"melody"> | kw<"rhythm">)
+      definitionHead
+      params[@dynamicPrecedence=1] {
+        !immediate immediateParen !immediate ArgumentList<e, pe>
+        ReturnType {
+          !typeascription "::" pe
+        }?
+      }?
+      expressionList<e, pe>? 
+    end
+  }  
+  
+  definitionHead {
+    Identifier ~id |
+    ParenthesizedExpression<definitionHead> |
+    Operator ~op
+  }
+  
+  
+  // EXPRESSIONS
+  
+  e {
+    statement |
+    CompoundExpression |
+    UnaryExpression<e> |
+    BinaryExpression<e> |
+    TernaryExpression<e> |
+    FunctionExpression<e, pe> |
+    FunctionExpression[closedBy="end"] { verboseFunctionExpression } |
+    Operator[group="operator"] { ":" ~op } |
+    pe
+  }
+  
+  pe {
+    CallExpression<e, pe> |
+    Identifier ~id |
+    Number |
+    Integer |
+    String |
+    TupleExpression<e, pe> |
+    ParenthesizedExpression<e> |
+    Operator ~op
+  }
+  
+  TernaryExpression<e> {
+    e
+    !ternary ternary1 !ternary
+    e
+    !ternary ternary2 !ternary
+    e
+  }
+  
+  
+  CompoundExpression[closedBy="end"] {
+    kw<"begin"> expressionList<e, pe> end
+  }
+  
+  CallExpression<e, pe> {
+    pe
+    !call immediateParen
+    !call args[@dynamicPrecedence=1] { ArgumentList<e, pe> }
+    DoClause?
+  }
+  
+  DoClause[closedBy="end"] {
+    kw<"do"> expressionList<e, pe> end
+  }
+  
+  ArgumentList[closedBy=")"]<e, pe> {
+    "("
+    (arg<e, pe> ~id ("," arg<e, pe> ~id)*)?
+    (";" arg<e, pe> ("," arg<e, pe>)*)?
+    ","?
+    ")"
+  }
+  
+  arg<e, pe> {
+    (e | NamedArgument { NamedField<e, pe>  }) ~id
+  }
+  
+  ParenthesizedExpression[closedBy=")"]<e> {
+    "(" !regular1 simpleExpressionList<e> !regular1 ")"
+  }
+  
+  TupleExpression[closedBy=")"]<e, pe> {
+    "("
+      (
+      (tupleelem<e, pe> ~id !regular0 ",") |
+      (tupleelem<e, pe> ~id (!regular0 "," tupleelem<e, pe> ~id)+ ","?)
+      )?
+    ")"
+  }
+  
+  tupleelem<e, pe> {
+    e | NamedField<e, pe>
+  }
+  
+  NamedField<e, pe> {
+    name { Identifier  } ~id !assign "=" e
+  }
+  
+  verboseFunctionExpression {
+    kw<"function"> ArgumentList<e, pe> expressionList<e, pe>? end
+  }
+  
+  FunctionExpression<e, pe> {
+    (Identifier ~id | ArgumentList<e, pe>) !arrow "->" (e | AssignmentExpression<e>)
+  }
+  
+  BinaryExpression<e> {
+    e !power powerOperator !power e |
+    e !bitshift bitshiftOperator !bitshift e |
+    e !times timesOperator !times e |
+    e !plus ("$" | plusOperator) !plus e |
+    e !arrow arrowOperator e |
+    e !pipeback "<|" e |
+    e !pipe "|>" e |
+    e !contains (kw<"in"> | kw<"isa"> | comparisonOperator) !contains e |
+    e !bor "||" e |
+    e !band "&&" e
+  }
+  
+  UnaryExpression<e> {
+    (unaryOperatorExtra | plusminus) ~op !prefix e |
+    e !postfix ("'" | ".'")
+  }
+  
+  Operator[group="operator"] {
+    !regular0 (
+      "$" |
+      "=" |
+      assignOperator |
+      plusOperator |
+      timesOperator |
+      powerOperator |
+      comparisonOperator
+    )
+  }
+  
+  
+  IfClause<e, pe> {
+    kw<"if"> e
+  }
+  
+  ForClause<e, pe> {
+    kw<"for"> ForBinding<e, pe> (!regular0 "," ForBinding<e, pe>)*
+  }
+  
+  ForBinding<e, pe> {
+    (Identifier | TupleExpression<e, pe>) (kw<"in"> | "=" | "∈") e
+  }
+  
+  ScopedIdentifier {
+    "." !dot ScopedIdentifier |
+    (Identifier | ScopedIdentifier)? !dot "." !dot Identifier
+  }
+  
+  RangeExpression<e> {
+    e !range ":" !range e
+  }
+  
+  @skip {} {
+    String {
+      '"' (stringContent )* '"'
+    }
+   
+  }
+  
+  
+  plusOperator {
+    "." !immediate nowhitespace (plusOperatorExtra | plusminus) |
+    (plusOperatorExtra | plusminus)
+  }
+  
   end { @specialize[@name=end,group="keyword"]<Identifier, "end"> }
   kw<term> { @specialize[@name={term},group="keyword"]<Identifier, term> }
   
