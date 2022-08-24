@@ -1,3 +1,3 @@
-class Voice {
+export class Voice {
     constructor() {}
 }
