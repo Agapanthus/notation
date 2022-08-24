@@ -2,41 +2,67 @@ import { getGlyphAdvance } from "./fonts";
 import { SVGTarget } from "./svg";
 import { assert } from "./util";
 
+export const restDurations = {
+    "𝄺": 0,
+    "𝄻": 1,
+    "𝄼": 2,
+    "𝄽": 4,
+    "𝄾": 8,
+    "𝄿": 16,
+    "𝅀": 32,
+    "𝅁": 64,
+    "𝅂": 128,
+};
 
-export function drawRest(ctx: SVGTarget, x: number, y: number, note) {
-    assert(note.type == "rest", "input must be a rest");
+const rest2name = {
+    "0": "DoubleWhole",
+    "1": "Whole",
+    "2": "Half",
+    "4": "Quarter",
+    "8": "8th",
+    "16": "16th",
+    "32": "32nd",
+    "64": "64th",
+    "128": "128th",
+    "256": "256th",
+    "512": "512nd",
+    "1024": "1024th",
+};
 
-    let uniPoint = parseInt("E4E2", 16);
-    assert(note.duration >= 0 && note.duration <= 1024, "rest duration is weird: " + note.duration);
-    const restName =
-        "rest" +
-        {
-            "0": "DoubleWhole",
-            "1": "Whole",
-            "2": "Half",
-            "4": "Quarter",
-            "8": "8th",
-            "16": "16th",
-            "32": "32nd",
-            "64": "64th",
-            "128": "128th",
-            "256": "256th",
-            "512": "512nd",
-            "1024": "1024th",
-        }[note.duration + ""];
-    if (note.duration > 0) uniPoint += 1 + Math.log2(note.duration);
-    const w = getGlyphAdvance(restName);
+export class Rest {
+    private duration = 0;
+    private dots = 0;
 
-    ctx.drawText(x, y + 0.125 * 4, String.fromCodePoint(uniPoint));
+    constructor(note: any) {
+        assert(note.type == "rest", "input must be a rest");
 
-    // Dots
-    if (note.dots > 0) {
-        // TODO: arbitrary constant
-        const dDot = 0.12;
-        ctx.drawText(x + w + dDot, y + 0.125 * 5, "\uE1E7 ".repeat(note.dots));
-        x += dDot * note.dots;
+        this.duration = note.duration;
+        assert(
+            this.duration >= 0 && this.duration <= 1024,
+            "rest duration is weird: " + this.duration
+        );
+
+        this.dots = note.dots;
     }
 
-    // TODO: arbitrary constant
-    return x + w + 0.2;
+    public draw(ctx: SVGTarget, x: number, y: number) {
+        let uniPoint = parseInt("E4E2", 16);
+
+        const restName = "rest" + rest2name[this.duration + ""];
+        if (this.duration > 0) uniPoint += 1 + Math.log2(this.duration);
+        const w = getGlyphAdvance(restName);
+
+        ctx.drawText(x, y + 0.125 * 4, String.fromCodePoint(uniPoint));
+
+        // Dots
+        if (this.dots > 0) {
+            // TODO: arbitrary constant
+            const dDot = 0.12;
+            ctx.drawText(x + w + dDot, y + 0.125 * 5, "\uE1E7 ".repeat(this.dots));
+            x += dDot * this.dots;
+        }
+
+        // TODO: arbitrary constant
+        return x + w + 0.2;
+    }
 }

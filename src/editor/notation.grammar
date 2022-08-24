@@ -55,19 +55,11 @@
   }
 
   InstrumentVoice[closedBy="\n"] {
-    Identifier ":" BarList terminator
+    Identifier ":" barList terminator
   }
 
 
-  BarList {
-    Bar (BarLine Bar)*
-  }
-
-  BarLine {
-    "|" | "|:" | ":|" | "||" | "𝄀" | "𝄁" | "𝄂" | "𝄃" | "𝄄" | "𝄅" | "𝄆" | "𝄇"
-  }
-
-  Bar {
+  barList {
     whitespace* (Group (whitespace+ Group)* whitespace*)?
   }
 
@@ -76,7 +68,11 @@
   }
 
   groupMember {
-    Chord | Tone | Duration | Rest | SpecificRest
+    Chord | Tone | Duration | DurationSymbolic | Rest | SpecificRest | BarLine
+  }
+
+  BarLine {
+    "|" | "|:" | ":|" | "||" | "𝄀" | "𝄁" | "𝄂" | "𝄃" | "𝄄" | "𝄅" | "𝄆" | "𝄇"
   }
 
   Chord {
@@ -112,8 +108,12 @@
     ("𝄺"|"𝄻"|"𝄼"|"𝄽"|"𝄾"|"𝄿"|"𝅀"|"𝅁"|"𝅂") Dots?
   }
 
+  DurationSymbolic {
+    ("𝅜"|"𝅝"|"𝅗𝅥"|"♩"|"♪"|"𝅘𝅥𝅯"|"𝅘𝅥𝅰"|"𝅘𝅥𝅱"|"𝅘𝅥𝅲"|"♬"|"♫") Dots?
+  }
+
   Duration {
-    (("/" ("0"|"1"|"2"|"4"|"8"|"16"|"32"|"64"|"128"|"256"|"512"|"1024")) | "𝅜"|"𝅝"|"𝅗𝅥"|"♩"|"♪"|"𝅘𝅥𝅯"|"𝅘𝅥𝅰"|"𝅘𝅥𝅱"|"𝅘𝅥𝅲"|"♬"|"♫") Dots?
+    ("/" ("0"|"1"|"2"|"4"|"8"|"16"|"32"|"64"|"128"|"256"|"512"|"1024")) Dots?
   }
 
   Dots {

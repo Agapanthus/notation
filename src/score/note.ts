@@ -1,7 +1,22 @@
 import { accsPadding } from "./accidental";
 import { getEngravingDefaults, getGlyphWidth, lineThicknessMul, spatium2points } from "./fonts";
+import { ScoreTraverser } from "./scoreTraverser";
 import { SVGTarget } from "./svg";
 import { assert } from "./util";
+
+export const symbolicNoteDurations = {
+    "𝅜": 0,
+    "𝅝": 1,
+    "𝅗𝅥": 2,
+    "♩": 4,
+    "♪": 8,
+    "𝅘𝅥𝅯": 16,
+    "𝅘𝅥𝅰": 32,
+    "𝅘𝅥𝅱": 64,
+    "𝅘𝅥𝅲": 128,
+    "♬": 16,
+    "♫": 16,
+};
 
 export class Note {
     // midi-pitch
@@ -110,10 +125,10 @@ export class Note {
             // Stem
             let stemL = -1;
             const dx = getEngravingDefaults().stemThickness * lineThicknessMul;
-            let w0 = w - dx;
+            let w0 = w - dx / 2;
             let upwards = true;
             if (l <= 3) {
-                w0 = dx;
+                w0 = dx / 2;
                 stemL = -stemL;
                 upwards = false;
             }
