@@ -26,4 +26,10 @@ export class SVGTarget {
             this.s
         }px">${htmlEntities(s)}</text>`;
     }
+
+    drawFatLine(x: number, y: number, x2: number, y2: number, s: number = 1) {
+        this.str += `<polygon points="${x * this.s},${(y + s / 2) * this.s} ${x2 * this.s},${
+            (y2 + s / 2) * this.s
+        } ${x2 * this.s},${(y2 - s / 2) * this.s} ${x * this.s},${(y - s / 2) * this.s}"  />`;
+    }
 }

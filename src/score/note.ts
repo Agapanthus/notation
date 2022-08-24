@@ -2,7 +2,7 @@ import { accsPadding } from "./accidental";
 import { getEngravingDefaults, getGlyphWidth, lineThicknessMul, spatium2points } from "./fonts";
 import { ScoreTraverser } from "./scoreTraverser";
 import { SVGTarget } from "./svg";
-import { assert } from "./util";
+import { assert, linearRegression } from "./util";
 
 export const symbolicNoteDurations = {
     "𝅜": 0,
@@ -18,6 +18,14 @@ export const symbolicNoteDurations = {
     "♫": 16,
 };
 
+export class GroupContext {
+    isLast: boolean = false;
+
+    note: { x: number; y: number; w: number; beams: number; l: number }[] = [];
+
+    constructor() {}
+}
+
 export class Note {
     // midi-pitch
     protected pitch: number = 69;
@@ -32,8 +40,6 @@ export class Note {
     protected dots: number = 0;
 
     constructor(note) {
-        assert(note.type == "note");
-
         this.line = note.line;
         this.pitch = note.pitch;
         if (note.accs && note.accs.length > 0) this.accidentals = [note.accs];
@@ -41,7 +47,37 @@ export class Note {
         this.dots = note.dots;
     }
 
-    draw(ctx: SVGTarget, x: number, y: number) {
+    get hasBeams() {
+        return this.duration >= 8;
+    }
+
+    private drawStem(
+        ctx: SVGTarget,
+        x: number,
+        y: number,
+        w: number,
+        stemL: number,
+        l: number,
+        upwards: boolean
+    ) {
+        const dx = getEngravingDefaults().stemThickness * lineThicknessMul;
+        let w0 = w - dx / 2;
+        if (!upwards) {
+            w0 = dx / 2;
+            stemL = -stemL;
+        }
+        ctx.drawLine(
+            x + w0,
+            y + 0.125 * l,
+            x + w0,
+            y + 0.125 * l - stemL,
+            getEngravingDefaults().stemThickness * lineThicknessMul
+        );
+
+        return w0;
+    }
+
+    draw(ctx: SVGTarget, x: number, y: number, g: GroupContext | null) {
         // TODO: clef specific!
         const clefLine = 45;
         // effective note line
@@ -121,38 +157,82 @@ export class Note {
         // Note head
         ctx.drawText(x, y + 0.125 * l, noteHeadUni);
 
+        // TODO: Create longer stems if there are too many beams / flags
         if (this.duration >= 2) {
-            // Stem
-            let stemL = -1;
-            const dx = getEngravingDefaults().stemThickness * lineThicknessMul;
-            let w0 = w - dx / 2;
-            let upwards = true;
-            if (l <= 3) {
-                w0 = dx / 2;
-                stemL = -stemL;
-                upwards = false;
-            }
-            ctx.drawLine(
-                x + w0,
-                y + 0.125 * l,
-                x + w0,
-                y + 0.125 * l + stemL,
-                getEngravingDefaults().stemThickness * lineThicknessMul
-            );
+            if (g && this.duration >= 8) {
+                g.note.push({ x, y: y, w, beams: Math.log2(this.duration) - 2, l: l });
+            } else {
+                // Stem
+                const stemL = 1;
+                const upwards = l > 3;
+                const w0 = this.drawStem(ctx, x, y, w, stemL, l, upwards);
 
-            // bars
-            if (this.duration >= 8) {
-                assert(this.duration <= 1024);
-                let uniPoint = parseInt("E240", 16);
-                let level = Math.log2(this.duration) - 3;
-                uniPoint += level * 2;
-                if (!upwards) {
-                    uniPoint += 1;
+                // beams
+                if (this.duration >= 8) {
+                    assert(this.duration <= 1024);
+                    let uniPoint = parseInt("E240", 16);
+                    let level = Math.log2(this.duration) - 3;
+                    uniPoint += level * 2;
+                    if (!upwards) {
+                        uniPoint += 1;
+                    }
+                    ctx.drawText(
+                        x + w0,
+                        y + 0.125 * l + stemL * (upwards ? -1 : 1),
+                        String.fromCodePoint(uniPoint)
+                    );
                 }
-                ctx.drawText(x + w0, y + 0.125 * l + stemL, String.fromCodePoint(uniPoint));
             }
 
-            // TODO: Draw bars!
+            // Draw beams for everything
+            if (g && g.isLast) {
+                const gy = g.note.map((c) => c.y + 0.125 * c.l);
+                const slope = linearRegression(
+                    g.note.map((x) => x.x),
+                    gy
+                )[1];
+
+                const avgY = gy.reduce((p, c) => p + c) / g.note.length;
+                const upwards = avgY > y + 0.125 * 3;
+                const dirSign = upwards ? -1 : 1;
+
+                const stemL = 0.9 * dirSign;
+                // TODO: increase stemL based on individual notes in the group; i.e., iterate the notes and increase it if a single note is too close
+                // TODO: if there are outliers / two vertical groups, place the beam in the middle of the note-heads!
+                // TODO: for very long multi-beam (16th) groups, partially interrupt the beams (i.e., every 4 steps). Make this contrallable!
+                // TODO: Move beams sp they don't collide with stave lines
+
+                const dx = getEngravingDefaults().stemThickness * lineThicknessMul;
+                let gdx = w - dx / 2;
+                if (!upwards) gdx = dx / 2;
+
+                const stemEnd = (nx: number) => avgY + stemL + (nx - (g.note[0].x + gdx)) * slope;
+                for (const n of g.note) {
+                    // ctx.drawText(n.x, stemEnd, "x");
+                    this.drawStem(
+                        ctx,
+                        n.x,
+                        n.y,
+                        n.w,
+                        Math.abs(stemEnd(n.x + gdx) - (n.y + 0.125 * n.l)),
+                        n.l,
+                        upwards
+                    );
+                }
+
+                // TODO: arbitrary
+                const beamWidth = 0.12; //getEngravingDefaults().beamThickness * lineThicknessMul;
+                const beamDist = 0.03;
+
+                let dy = (-beamWidth / 2) * dirSign;
+                const x1 = g.note[0].x + gdx - dx / 2;
+                const x2 = g.note[g.note.length - 1].x + gdx + dx / 2;
+
+                for (let i = 0; i < g.note[0].beams; i++) {
+                    ctx.drawFatLine(x1, stemEnd(x1) + dy, x2, stemEnd(x2) + dy, beamWidth);
+                    dy += (-beamWidth - beamDist) * dirSign;
+                }
+            }
         }
 
         // Dots

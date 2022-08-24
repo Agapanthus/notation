@@ -1,5 +1,5 @@
 import { accidentalEffects } from "./accidental";
-import { Note, symbolicNoteDurations } from "./note";
+import { GroupContext, Note, symbolicNoteDurations } from "./note";
 import { Rest, restDurations } from "./rest";
 import { ScoreTraverser } from "./scoreTraverser";
 import { BarLine, barLine2enum, BarLineType, Stave } from "./stave";
@@ -34,7 +34,7 @@ export class Voice {
     private octave: number = 4;
     private newGroup = false;
 
-    private content: Array<Note | Rest | BarLine> = [];
+    private content: Array<Array<Note | Rest | BarLine>> = [];
 
     constructor(private name: string) {}
 
@@ -68,6 +68,14 @@ export class Voice {
         this.duration = symbolicNoteDurations[n];
         t.continue();
         this.parseDotsDuration(t);
+    }
+
+    private appendContent(content) {
+        if (this.content.length == 0 || this.newGroup) {
+            this.content.push([]);
+        }
+
+        this.content[this.content.length - 1].push(content);
     }
 
     private parseNote(t: ScoreTraverser) {
@@ -112,20 +120,21 @@ export class Voice {
             }
         }
 
-        const newGroup = this.newGroup;
-        this.newGroup = false;
+        // if the note doesn't have bars: interrupt the current group
+        // TODO: also make sure there is no group afterwards
+        //if (this.duration <= 4) this.newGroup = true;
 
-        this.content.push(
+        this.appendContent(
             new Note({
-                type: "note",
                 duration: this.duration,
                 dots: this.durationD,
                 pitch: this.octave * 12 + pitch,
-                newGroup: newGroup,
                 line: this.octave * 7 + line,
                 accs: accs,
             })
         );
+
+        this.newGroup = false;
     }
 
     private parseRest(t: ScoreTraverser) {
@@ -139,7 +148,7 @@ export class Voice {
             t.continue();
         }
 
-        this.content.push(new Rest({ type: "rest", duration: duration, dots: durationD }));
+        this.appendContent(new Rest({ type: "rest", duration: duration, dots: durationD }));
     }
 
     public eatFromAST(t: ScoreTraverser): boolean {
@@ -148,7 +157,7 @@ export class Voice {
                 let barLine = t.cs();
                 assert(t.continue());
                 // TODO: different types
-                this.content.push(new BarLine(barLine2enum[barLine]));
+                this.appendContent(new BarLine(barLine2enum[barLine]));
                 return true;
 
             case "Duration":
@@ -166,7 +175,7 @@ export class Voice {
 
             case "Rest":
                 t.continue();
-                this.content.push(
+                this.appendContent(
                     new Rest({ type: "rest", duration: this.duration, dots: this.durationD })
                 );
                 return true;
@@ -186,16 +195,27 @@ export class Voice {
         const st = new Stave();
         x = st.draw(ctx, x, y);
 
-        for (const c of this.content) {
-            console.log(c);
-            if (c instanceof Note) {
-                x = c.draw(ctx, x, y);
-            } else if (c instanceof Rest) {
-                x = c.draw(ctx, x, y);
-            } else if (c instanceof BarLine) {
-                x = c.draw(st, ctx, x, y);
-            } else {
-                assert(false, "unknown type", c);
+        for (const group of this.content) {
+            const hasGroup = group.filter((x) => x instanceof Note && x.hasBeams).length >= 2;
+
+            const g = hasGroup ? new GroupContext() : null;
+
+            let iterations = group.length;
+            for (const c of group) {
+                if (!--iterations && g) {
+                    g.isLast = true;
+                    // TODO: Draw groups containing rests / slow notes (e.g., if the last object is a rest)
+                }
+
+                if (c instanceof Note) {
+                    x = c.draw(ctx, x, y, g);
+                } else if (c instanceof Rest) {
+                    x = c.draw(ctx, x, y);
+                } else if (c instanceof BarLine) {
+                    x = c.draw(st, ctx, x, y);
+                } else {
+                    assert(false, "unknown type", c);
+                }
             }
         }
 
