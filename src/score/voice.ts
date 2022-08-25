@@ -200,13 +200,7 @@ export class Voice {
 
             const g = hasGroup ? new BeamGroupContext() : null;
 
-            let iterations = group.length;
             for (const c of group) {
-                if (!--iterations && g) {
-                    g.isLast = true;
-                    // TODO: Draw groups containing rests / slow notes (e.g., if the last object is a rest)
-                }
-
                 if (c instanceof Note) {
                     x = c.draw(ctx, x, y, g);
                 } else if (c instanceof Rest) {
@@ -217,6 +211,8 @@ export class Voice {
                     assert(false, "unknown type", c);
                 }
             }
+
+            if (g) g.drawBeams(ctx);
         }
 
         return y + 3;
