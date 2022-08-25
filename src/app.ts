@@ -12,7 +12,7 @@ window.onload = () => {
     });
 
     createEditor(
-        "# a simple function\n\nviolin: /8+a5/32-e/16.g/8c' h'/16c''a,/8d'' | /2.++h' 𝄽 | /0a4 /16.e4/32g c' brh | /4. a, c'''\nviola: a𝅘𝅥𝅯bc𝄽r𝄂\n\n#=\ntest\n=#"
+        "violin: o5 8+a3-e6.g8c' h'6c''a,8d'' | 2.++h' 𝄽 | o4 0a 16.e3g c' brh | 4. a, c'''\nviola: a𝅘𝅥𝅯bc𝄽r𝄂\n"
     );
 
     console.log("loading done!");

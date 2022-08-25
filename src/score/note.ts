@@ -6,9 +6,9 @@ import {
     lineThicknessMul,
     spatium2points,
 } from "./fonts";
-import { ScoreTraverser } from "./scoreTraverser";
 import { SVGTarget } from "./svg";
 import { assert, average, linearRegression } from "./util";
+import { VoiceElement } from "./voice";
 
 export const symbolicNoteDurations = {
     "𝅜": 0,
@@ -226,6 +226,12 @@ export class BeamGroupContext {
     }
 
     constructor() {}
+
+    static tryCreate(group: VoiceElement[]) {
+        if (group.filter((x) => x instanceof Note && x.hasBeams).length >= 2)
+            return new BeamGroupContext();
+        else return null;
+    }
 }
 
 // TODO: arbitrary constant

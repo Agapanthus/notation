@@ -1,6 +1,5 @@
 # TODO
 
--   better beam rendering
 -   pre-render the positions and equally space notes in a column
     -   also, calculate the page size. Calculate stave-spacing and place accordingly
     -   breaks staves and make a multi-line note rendering

@@ -68,7 +68,7 @@
   }
 
   groupMember {
-    Chord | Tone | Duration | DurationSymbolic | Rest | SpecificRest | BarLine
+    Chord | Tone | Duration | DurationSymbolic | Rest | SpecificRest | BarLine | OctaveSign
   }
 
   BarLine {
@@ -88,8 +88,12 @@
     "a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"
   }
 
+  OctaveSign {
+    "o" Integer
+  }
+
   ToneOctave {
-   ( Integer) |
+   //( Integer) |
    (  ",")+ | 
    (  "'")+
   }
@@ -113,7 +117,7 @@
   }
 
   Duration {
-    ("/" ("0"|"1"|"2"|"4"|"8"|"16"|"32"|"64"|"128"|"256"|"512"|"1024")) Dots?
+    ("0"|"1"|"2"|"4"|"8"|"16"|"6"|"32"|"3"|"64"|"128"|"256"|"512"|"1024") Dots?
   }
 
   Dots {

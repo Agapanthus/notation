@@ -28,13 +28,15 @@ const inOctaveLine = {
     h: 6,
 };
 
+export type VoiceElement = Note | Rest | BarLine;
+
 export class Voice {
     private duration: number = 4;
     private durationD: number = 0;
     private octave: number = 4;
     private newGroup = false;
 
-    private content: Array<Array<Note | Rest | BarLine>> = [];
+    private content: Array<Array<VoiceElement>> = [];
 
     constructor(private name: string) {}
 
@@ -48,15 +50,14 @@ export class Voice {
     }
 
     private parseDuration(t: ScoreTraverser) {
-        this.duration = parseInt(t.cs().slice(1));
+        this.duration = parseInt(t.cs());
         assert(
-            t
-                .cs()
-                .slice(1)
-                .startsWith(this.duration + ""),
+            t.cs().startsWith(this.duration + ""),
             "wrong duration",
             this.duration + " " + t.cs()
         );
+        if (this.duration == 6) this.duration = 16;
+        if (this.duration == 3) this.duration = 32;
         t.continue();
         this.parseDotsDuration(t);
     }
@@ -100,14 +101,7 @@ export class Voice {
         }
 
         if (t.n() == "ToneOctave") {
-            if (parseInt(t.cs()) + "" == t.cs()) {
-                this.octave = parseInt(t.cs());
-                assert(this.octave > -20 && this.octave < 20);
-                t.continue();
-                if (t.n() == "Integer") {
-                    t.continue();
-                }
-            } else if (t.cs()[0] == "'") {
+            if (t.cs()[0] == "'") {
                 pitch += 12 * t.cs().length;
                 line += 7 * t.cs().length;
                 t.continue();
@@ -155,13 +149,22 @@ export class Voice {
         switch (t.n()) {
             case "BarLine":
                 let barLine = t.cs();
-                assert(t.continue());
+                t.continue()
                 // TODO: different types
                 this.appendContent(new BarLine(barLine2enum[barLine]));
                 return true;
 
             case "Duration":
                 this.parseDuration(t);
+                return true;
+
+            case "OctaveSign":
+                assert(t.continue());
+                assert(t.n() == "Integer");
+                assert(parseInt(t.cs()) + "" == t.cs());
+                this.octave = parseInt(t.cs());
+                assert(this.octave > -20 && this.octave < 20);
+                t.continue();
                 return true;
 
             case "DurationSymbolic":
@@ -196,9 +199,7 @@ export class Voice {
         x = st.draw(ctx, x, y);
 
         for (const group of this.content) {
-            const hasGroup = group.filter((x) => x instanceof Note && x.hasBeams).length >= 2;
-
-            const g = hasGroup ? new BeamGroupContext() : null;
+            const g = BeamGroupContext.tryCreate(group);
 
             for (const c of group) {
                 if (c instanceof Note) {
