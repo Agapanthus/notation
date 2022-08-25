@@ -27,3 +27,28 @@ export const accidentalEffects = {
     "𝄲": 1,
     "𝄳": -1,
 };
+
+export const accidentalNames = {
+    "+": "accidentalSharp",
+    "++": "accidentalDoubleSharp",
+    "-": "accidentalFlat",
+    "--": "accidentalDoubleFlat",
+    "♮": "accidentalNatural",
+    "♭": "accidentalFlat",
+    "♯": "accidentalSharp",
+    "𝄪": "accidentalDoubleSharp",
+    "𝄫": "accidentalDoubleFlat",
+    "𝄭": "accidentalFlatOneArrowDown",
+    "𝄯": "accidentalNaturalOneArrowDown",
+    "𝄮": "accidentalNaturalOneArrowUp",
+    "𝄰": "accidentalThreeQuarterTonesSharpArrowUp",
+    "𝄱": "accidentalSharpOneArrowDown",
+    "𝄲": "accidentalQuarterToneSharp4",
+    "𝄳": "accidentalQuarterToneFlat4",
+
+    "♯♯": "accidentalSharpSharp",
+    "+++": "accidentalTripleSharp",
+    "---": "accidentalTripleFlat",
+    "𝄯♭": "accidentalNaturalFlat",
+    "𝄯♯": "accidentalNaturalSharp",
+};

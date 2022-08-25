@@ -1,5 +1,11 @@
-import { accsPadding } from "./accidental";
-import { getEngravingDefaults, getGlyphWidth, lineThicknessMul, spatium2points } from "./fonts";
+import { accidentalNames, accsPadding } from "./accidental";
+import {
+    getEngravingDefaults,
+    getGlyphWidth,
+    getSMUFLUni,
+    lineThicknessMul,
+    spatium2points,
+} from "./fonts";
 import { ScoreTraverser } from "./scoreTraverser";
 import { SVGTarget } from "./svg";
 import { assert, average, linearRegression } from "./util";
@@ -18,6 +24,13 @@ export const symbolicNoteDurations = {
     "♫": 16,
 };
 
+const noteHeads = {
+    "0": "noteheadDoubleWhole",
+    "1": "noteheadWhole",
+    "2": "noteheadHalf",
+    "4": "noteheadBlack",
+};
+
 export interface BeamGroup {
     x: number;
     y: number;
@@ -30,6 +43,17 @@ export interface BeamGroup {
 export class BeamGroupContext {
     public isLast: boolean = false;
     note: BeamGroup[] = [];
+
+    public push(x: number, y: number, w: number, duration: number, l: number, yl: number) {
+        this.note.push({
+            x,
+            y,
+            w,
+            beams: Math.log2(duration) - 2,
+            l,
+            yl,
+        });
+    }
 
     private tryFindBeamDirectionsAndSlopeInBetween(
         slope: number,
@@ -89,6 +113,8 @@ export class BeamGroupContext {
         if (!res) throw "error";
         const [slope, b, r] = res;
 
+        // TODO: define a maximum slope, i.e., cc'' shouldn't create a very steep beam but longer stems
+
         const res2 = this.tryFindBeamDirectionsAndSlopeInBetween(slope, r);
         if (res2) {
             return res2;
@@ -138,7 +164,7 @@ export class Note {
         return this.duration >= 8;
     }
 
-    private drawStem(
+    static drawStem(
         ctx: SVGTarget,
         x: number,
         yl: number,
@@ -163,7 +189,7 @@ export class Note {
         return w0;
     }
 
-    private drawBeams(ctx: SVGTarget, g: BeamGroupContext) {
+    static drawBeams(ctx: SVGTarget, g: BeamGroupContext) {
         const { slope, directions, stemL } = g.findBeamDirectionsAndSlope();
 
         // TODO: if there are outliers / two vertical groups, place the beam in the middle of the note-heads!
@@ -184,7 +210,7 @@ export class Note {
         for (let i = 0; i < g.note.length; i++) {
             const n = g.note[i];
             // TODO: if the beam is in the middle and the flipped note used a shared secondary beam: slightly extend the length of the stem, e.g., /8c''/16cc''
-            this.drawStem(
+            Note.drawStem(
                 ctx,
                 n.x,
                 n.yl,
@@ -194,9 +220,15 @@ export class Note {
             );
         }
 
+        // adjust the strength of the beam based on the slope
+        // sqrt(x^2 + 1) = 1 / cos(atan(x))
+        const adjustment = Math.sqrt(slope * slope + 1);
+        const adjustedBeamWidth = beamWidth * adjustment;
+        const adjustedBeamDist = beamDist * adjustment;
+
         // relative position of the beams
         // initially move ca. 1/2 the beam strength towards the note-heads to make sure it overlaps with the stems
-        let dy = (-beamWidth / 2) * directions[0];
+        let dy = (-adjustedBeamWidth / 2) * directions[0];
 
         // start position of
         const x_start = (i: number) => g.note[i].x + gdx(i) - stemWidth / 2;
@@ -236,7 +268,7 @@ export class Note {
                             stemEnd(xs, j) + dy,
                             xe,
                             stemEnd(xe, i - 1) + dy,
-                            beamWidth
+                            adjustedBeamWidth
                         );
 
                         // end the beam group
@@ -245,65 +277,11 @@ export class Note {
                 }
             }
             // TODO: what about multi-direction beams? Then we have to think about the direction
-            dy += (-beamWidth - beamDist) * directions[0];
+            dy += (-adjustedBeamWidth - adjustedBeamDist) * directions[0];
         }
     }
 
-    draw(ctx: SVGTarget, x: number, y: number, g: BeamGroupContext | null) {
-        // TODO: clef specific!
-        const clefLine = 45;
-        // effective note line
-        const l = clefLine - this.line;
-        // determine y positions
-        const yl = y + 0.125 * l;
-
-        // accidentials
-        if (this.accidentals.length > 0) {
-            const code = {
-                "++": "\uE263",
-                "+": "\uE262",
-                "0": "\uE261",
-                "-": "\uE260",
-                "--": "\uE264",
-            };
-            const code2 = {
-                "++": "accidentalDoubleSharp",
-                "+": "accidentalSharp",
-                "0": "accidentalNatural",
-                "-": "accidentalFlat",
-                "--": "accidentalDoubleFlat",
-            };
-            const w0 = getGlyphWidth(code2[this.accidentals[0]]);
-
-            ctx.drawText(x, yl, code[this.accidentals[0]]);
-            x += w0 + accsPadding;
-        }
-
-        let noteHead = "";
-        const noteHeads = {
-            "0": "noteheadDoubleWhole",
-            "1": "noteheadWhole",
-            "2": "noteheadHalf",
-            "4": "noteheadBlack",
-        };
-        let noteHeadUni = "";
-        const noteHeadUnis = {
-            "0": "\uE0A0",
-            "1": "\uE0A2",
-            "2": "\uE0A3 ",
-            "4": "\uE0A4 ",
-        };
-        if (this.duration <= 2) {
-            noteHead = noteHeads[this.duration + ""];
-            noteHeadUni = noteHeadUnis[this.duration + ""];
-        } else {
-            noteHead = noteHeads["4"];
-            noteHeadUni = noteHeadUnis["4"];
-        }
-
-        const w = getGlyphWidth(noteHead);
-
-        // Ledger lines
+    static drawLedgerLines(ctx: SVGTarget, x: number, y: number, l: number, w: number) {
         const le = getEngravingDefaults().legerLineExtension * spatium2points;
         if (l <= -2) {
             for (let i = -2; i >= l; i -= 2) {
@@ -327,64 +305,99 @@ export class Note {
                 );
             }
         }
+    }
+
+    static drawAccidentals(ctx: SVGTarget, x: number, yl: number, accidentals:string[]) {
+        // TODO: Draw all accidentals. Or should there only be one?
+        if (accidentals.length > 0) {
+            const w0 = getGlyphWidth(accidentalNames[accidentals[0]]);
+            ctx.drawText(x, yl, getSMUFLUni(accidentalNames[accidentals[0]]));
+            x += w0 + accsPadding;
+        }
+        return x;
+    }
+
+    static getFlagUni(d: number, upwards: boolean) {
+        assert(d <= 1024);
+        let uniPoint = parseInt("E240", 16);
+        const level = Math.log2(d) - 3;
+        uniPoint += level * 2;
+        if (!upwards) {
+            uniPoint += 1;
+        }
+        return String.fromCodePoint(uniPoint);
+    }
+
+    static drawDots(ctx: SVGTarget, x: number, y: number, w: number, l: number, dots: number) {
+        if (dots > 0) {
+            // TODO: arbitrary constant
+            const dDot = 0.12;
+            ctx.drawText(x + w + dDot, y + 0.125 * (l + ((l + 1) % 2)), "\uE1E7 ".repeat(dots));
+            x += dDot * dots;
+        }
+        return x;
+    }
+
+    static drawStemWithFlags(
+        ctx: SVGTarget,
+        x: number,
+        yl: number,
+        l: number,
+        w: number,
+        duration: number
+    ) {
+        // TODO: Create longer stems if there are too many beams / flags / ledger lines
+        const stemL = 1;
+        const upwards = l > 3;
+        const w0 = Note.drawStem(ctx, x, yl, w, stemL, upwards);
+
+        // flags
+        if (duration >= 8) {
+            ctx.drawText(
+                x + w0,
+                yl + stemL * (upwards ? -1 : 1),
+                Note.getFlagUni(duration, upwards)
+            );
+        }
+    }
+
+    public draw(ctx: SVGTarget, x: number, y: number, g: BeamGroupContext | null) {
+        // TODO: clef specific!
+        const clefLine = 45;
+        // effective note line
+        const l = clefLine - this.line;
+        // determine y positions
+        const yl = y + 0.125 * l;
+
+        // accidentals
+        x = Note.drawAccidentals(ctx, x, yl, this.accidentals);
+
+        // TODO: Support other note-head shapes!
+        const noteHead = noteHeads[this.duration <= 2 ? this.duration : "4"];
+        const w = getGlyphWidth(noteHead);
+
+        // Ledger lines
+        Note.drawLedgerLines(ctx, x, y, l, w);
 
         // Note head
-        ctx.drawText(x, yl, noteHeadUni);
+        ctx.drawText(x, yl, getSMUFLUni(noteHead));
 
-        // TODO: Create longer stems if there are too many beams / flags
         if (this.duration >= 2) {
             if (g && this.duration >= 8) {
-                g.note.push({
-                    x,
-                    y,
-                    w,
-                    beams: Math.log2(this.duration) - 2,
-                    l,
-                    yl,
-                });
+                g.push(x, y, w, this.duration, l, yl);
             } else {
                 // Stem
-
-                // TODO: automatic stem length
-                // TODO: increase stem lengths if there are many ledger lines!
-                const stemL = 1;
-                const upwards = l > 3;
-                const w0 = this.drawStem(ctx, x, yl, w, stemL, upwards);
-
-                // beams
-                if (this.duration >= 8) {
-                    assert(this.duration <= 1024);
-                    let uniPoint = parseInt("E240", 16);
-                    let level = Math.log2(this.duration) - 3;
-                    uniPoint += level * 2;
-                    if (!upwards) {
-                        uniPoint += 1;
-                    }
-                    ctx.drawText(
-                        x + w0,
-                        yl + stemL * (upwards ? -1 : 1),
-                        String.fromCodePoint(uniPoint)
-                    );
-                }
+                Note.drawStemWithFlags(ctx, x, yl, l, w, this.duration);
             }
 
             // Draw beams for everything
             if (g && g.isLast) {
-                this.drawBeams(ctx, g);
+                Note.drawBeams(ctx, g);
             }
         }
 
         // Dots
-        if (this.dots > 0) {
-            // TODO: arbitrary constant
-            const dDot = 0.12;
-            ctx.drawText(
-                x + w + dDot,
-                y + 0.125 * (l + ((l + 1) % 2)),
-                "\uE1E7 ".repeat(this.dots)
-            );
-            x += dDot * this.dots;
-        }
+        x = Note.drawDots(ctx, x, y, w, l, this.dots);
 
         // TODO: arbitrary constant
         return x + w + 0.5;
