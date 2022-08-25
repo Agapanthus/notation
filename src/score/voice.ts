@@ -1,5 +1,5 @@
 import { accidentalEffects } from "./accidental";
-import { GroupContext, Note, symbolicNoteDurations } from "./note";
+import { BeamGroupContext, Note, symbolicNoteDurations } from "./note";
 import { Rest, restDurations } from "./rest";
 import { ScoreTraverser } from "./scoreTraverser";
 import { BarLine, barLine2enum, BarLineType, Stave } from "./stave";
@@ -198,7 +198,7 @@ export class Voice {
         for (const group of this.content) {
             const hasGroup = group.filter((x) => x instanceof Note && x.hasBeams).length >= 2;
 
-            const g = hasGroup ? new GroupContext() : null;
+            const g = hasGroup ? new BeamGroupContext() : null;
 
             let iterations = group.length;
             for (const c of group) {

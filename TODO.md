@@ -28,3 +28,15 @@
 -   wikipedia: unicode music symbols https://en.wikipedia.org/wiki/Musical_Symbols_(Unicode_block)
 -   SMUFL https://w3c.github.io/smufl/latest/tables/noteheads.html
 -   SMUFL Browser https://github.com/Edirom/SMuFL-Browser
+
+
+## Ideas
+
+- notate accents, dynamics etc. using a separate line below! Synchronize using markers or using ascii-art spacing!
+  - .e.g, " <<<<<<<<<<<<<<<< f >>>>>>> pp" for gabeln
+- another relative mode
+- imitation macros, i.e., demonstrate an harmonization and rhythm based on parameters ("holes") and this pattern is repeatedly applied to just a list of the parameter-tones
+  - but this has to be very deterministic and predictable! No surprises!
+  - e.g. automatically detect octaves, specify other chords
+  - important: allow easy deviation from the pattern; i.e., have a way to connect two notes if they are the same or insert rests etc...
+- tools to modify the source, i.e., "expand macro"

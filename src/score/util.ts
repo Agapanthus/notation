@@ -14,6 +14,7 @@ export function htmlEntities(str: string): string {
         .replace(/"/g, "&quot;");
 }
 
+/*b
 export function linearRegression(x: number[], y: number[]) {
     const avgX = x.reduce((p, c) => p + c, 0) / x.length;
     const xDifAverage = x.map((x) => avgX - x);
@@ -24,4 +25,49 @@ export function linearRegression(x: number[], y: number[]) {
     const beta = SSxy / SSxx;
     const alpha = avgY - beta * avgX;
     return [alpha, beta];
+}
+*/
+
+// https://stackoverflow.com/a/19040841/6144727
+export function linearRegression(x: number[], y: number[], calcAll: boolean = false) {
+    let sumX = 0.0; // sum of x
+    let sumXX = 0.0; // sum of x**2
+    let sumXY = 0.0; // sum of x * y
+    let sumY = 0.0; // sum of y
+    let sumYY = 0.0; // sum of y**2
+    const n = x.length;
+
+    for (let i = 0; i < n; i++) {
+        sumX += x[i];
+        sumXX += x[i] * x[i];
+        sumXY += x[i] * y[i];
+        sumY += y[i];
+        sumYY += y[i] * y[i];
+    }
+
+    const denom = n * sumXX - sumX * sumX;
+    if (denom == 0) {
+        // singular matrix. can't solve the problem.
+        return null;
+    }
+
+    const m = (n * sumXY - sumX * sumY) / denom;
+    if (!calcAll) return [m, 0, 0];
+
+    const b = (sumY * sumXX - sumX * sumXY) / denom;
+
+    // compute correlation coeff
+    const r =
+        (sumXY - (sumX * sumY) / n) /
+        Math.sqrt((sumXX - (sumX * sumX) / n) * (sumYY - (sumY * sumY) / n));
+
+    return [m, b, r];
+}
+
+export function sum(x: number[]): number {
+    return x.reduce((p, c) => p + c);
+}
+
+export function average(x: number[]): number {
+    return x.reduce((p, c) => p + c) / x.length;
 }
