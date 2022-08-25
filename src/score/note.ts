@@ -163,6 +163,9 @@ export class Note {
                 g.note.push({ x, y: y, w, beams: Math.log2(this.duration) - 2, l: l });
             } else {
                 // Stem
+
+                // TODO: automatic stem length
+                // TODO: increase stem lengths if there are many ledger lines!
                 const stemL = 1;
                 const upwards = l > 3;
                 const w0 = this.drawStem(ctx, x, y, w, stemL, l, upwards);
@@ -220,16 +223,57 @@ export class Note {
                     );
                 }
 
-                // TODO: arbitrary
+                // TODO: arbitrary constants!
                 const beamWidth = 0.12; //getEngravingDefaults().beamThickness * lineThicknessMul;
                 const beamDist = 0.03;
 
                 let dy = (-beamWidth / 2) * dirSign;
-                const x1 = g.note[0].x + gdx - dx / 2;
-                const x2 = g.note[g.note.length - 1].x + gdx + dx / 2;
+                const x_start = (i: number) => g.note[i].x + gdx - dx / 2;
+                const x_end = (i: number) => g.note[i].x + gdx + dx / 2;
 
-                for (let i = 0; i < g.note[0].beams; i++) {
-                    ctx.drawFatLine(x1, stemEnd(x1) + dy, x2, stemEnd(x2) + dy, beamWidth);
+                const maxBeams = Math.max(...g.note.map((x) => x.beams));
+                const beamCounts = g.note.map((x) => x.beams);
+                // append terminator
+                beamCounts.push(0);
+
+                // TODO: arbitrary constant
+                const shortBeamLength = 0.2;
+
+                for (let b = 1; b <= maxBeams; b++) {
+                    let j = -1;
+                    for (let i = 0; i < beamCounts.length; i++) {
+                        if (beamCounts[i] >= b) {
+                            // start recording the beam group
+                            if (j == -1) j = i;
+                        } else {
+                            if (j >= 0) {
+                                // draw the recorded beam group
+                                let xs = x_start(j);
+                                let xe = x_end(i - 1);
+
+                                // if the beam can't connect two notes, draw a short "beam-let"
+                                if (j == i - 1) {
+                                    xs -= shortBeamLength;
+
+                                    // if the beams to the left don't allow a "beamlet", draw it in the other direction
+                                    if (beamCounts[i - 2] <= beamCounts[i] - 1) {
+                                        xs += 2 * shortBeamLength;
+                                    }
+                                }
+
+                                ctx.drawFatLine(
+                                    xs,
+                                    stemEnd(xs) + dy,
+                                    xe,
+                                    stemEnd(xe) + dy,
+                                    beamWidth
+                                );
+
+                                // end the beam group
+                                j = -1;
+                            }
+                        }
+                    }
                     dy += (-beamWidth - beamDist) * dirSign;
                 }
             }
