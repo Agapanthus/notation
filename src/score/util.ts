@@ -71,3 +71,38 @@ export function sum(x: number[]): number {
 export function average(x: number[]): number {
     return x.reduce((p, c) => p + c) / x.length;
 }
+
+export class MusicFraction {
+    // e.g., "3/4" as metrum or "3/16" as duration of 8th with a dot
+
+    public x: number;
+    public y: number;
+
+    constructor(x: number | null = null, y: number | null = null) {
+        if (x === null) {
+            this.x = 0;
+            this.y = 0;
+        } else {
+            assert(y && 
+                [0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024].includes(y),
+                "expected y to be a power of 2",
+                y
+            );
+            if (x !== null) this.x = x;
+            if (y !== null) this.y = y;
+        }
+    }
+
+    static fromDots(duration: number, dots: number) {
+        assert(dots >= 0 && Number.isInteger(dots), "expected dots to be an integer", dots);
+       
+        let x = 1;
+        let y = duration * Math.pow(2, dots);
+        if (dots > 0) x += Math.pow(2, dots);
+        return new MusicFraction(x, y);
+    }
+
+    get isEmpty(): boolean {
+        return !(this.x && this.y);
+    }
+}

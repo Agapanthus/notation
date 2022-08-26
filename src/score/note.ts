@@ -7,11 +7,11 @@ import {
     spatium2points,
 } from "./fonts";
 import { SVGTarget } from "./svg";
-import { assert, average, linearRegression } from "./util";
+import { assert, average, linearRegression, MusicFraction } from "./util";
 import { VoiceElement } from "./voice";
 
 export const symbolicNoteDurations = {
-    "𝅜": 0,
+    "𝅜": 0.5,
     "𝅝": 1,
     "𝅗𝅥": 2,
     "♩": 4,
@@ -25,7 +25,7 @@ export const symbolicNoteDurations = {
 };
 
 const noteHeads = {
-    "0": "noteheadDoubleWhole",
+    "0.5": "noteheadDoubleWhole",
     "1": "noteheadWhole",
     "2": "noteheadHalf",
     "4": "noteheadBlack",
@@ -249,7 +249,7 @@ export class Note {
     // line in system
     protected line: number = 0;
 
-    // duration, i.e. 0,1,2,4,8 ...
+    // duration, i.e. 0.5,1,2,4,8 ...
     protected duration: number = 4;
     // number of duration-dots
     protected dots: number = 0;
@@ -264,6 +264,16 @@ export class Note {
 
     get hasBeams() {
         return this.duration >= 8;
+    }
+
+    get beats(): MusicFraction {
+        return MusicFraction.fromDots(this.duration, this.dots);
+    }
+
+    get width(): number {
+        // TODO: calculate width!
+        // maybe calculate multiple numbers? minimum-width and ideal-width
+        return 0;
     }
 
     static drawStem(

@@ -33,7 +33,7 @@ export type VoiceElement = Note | Rest | BarLine;
 export class Voice {
     private duration: number = 4;
     private durationD: number = 0;
-    private octave: number = 4;
+    private octave: number = 5;
     private newGroup = false;
 
     private content: Array<Array<VoiceElement>> = [];
@@ -56,6 +56,7 @@ export class Voice {
             "wrong duration",
             this.duration + " " + t.cs()
         );
+        if (this.duration == 0) this.duration = 0.5;
         if (this.duration == 6) this.duration = 16;
         if (this.duration == 3) this.duration = 32;
         t.continue();
@@ -149,7 +150,7 @@ export class Voice {
         switch (t.n()) {
             case "BarLine":
                 let barLine = t.cs();
-                t.continue()
+                t.continue();
                 // TODO: different types
                 this.appendContent(new BarLine(barLine2enum[barLine]));
                 return true;
@@ -194,7 +195,30 @@ export class Voice {
         return false;
     }
 
+    // render width and so on for every element
+    public render() {
+        // TODO:
+        // get the width and time-length of every element and map the objects to beats, so you can synchronize multiple voices
+
+        for (const group of this.content) {
+            for (const c of group) {
+                if (c instanceof Note) {
+                    console.log(c.beats, c.width);
+                    // TODO
+                } else if (c instanceof Rest) {
+                    // TODO
+                } else if (c instanceof BarLine) {
+                    // TODO
+                } else {
+                    assert(false, "unknown type", c);
+                }
+            }
+        }
+    }
+
     public draw(ctx: SVGTarget, x: number, y: number) {
+        this.render();
+
         const st = new Stave();
         x = st.draw(ctx, x, y);
 
