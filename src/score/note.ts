@@ -1,14 +1,30 @@
 import { accidentalNames, accsPadding } from "./accidental";
 import {
+    FlexDimension,
     getEngravingDefaults,
+    getGlyphDim,
     getGlyphWidth,
     getSMUFLUni,
     lineThicknessMul,
     spatium2points,
 } from "./fonts";
+import { fraction2name } from "./rest";
 import { SVGTarget } from "./svg";
 import { assert, average, linearRegression, MusicFraction } from "./util";
 import { VoiceElement } from "./voice";
+
+// TODO: arbitrary constant
+const shortBeamLength = 0.2;
+
+// TODO: arbitrary constants!
+const beamWidth = 0.12; //getEngravingDefaults().beamThickness * lineThicknessMul;
+const beamDist = 0.03;
+
+// TODO: arbitrary constant
+const defaultInterNote = 0.3;
+
+// TODO: arbitrary constant
+const dDotMul = 1.5;
 
 export const symbolicNoteDurations = {
     "𝅜": 0.5,
@@ -158,8 +174,7 @@ export class BeamGroupContext {
                 n.x,
                 n.yl,
                 n.w,
-                Math.abs(stemEnd(n.x + gdx(i), i) - n.yl),
-                directions[i] < 0
+                Math.abs(stemEnd(n.x + gdx(i), i) - n.yl) * directions[i]
             );
         }
 
@@ -227,19 +242,15 @@ export class BeamGroupContext {
 
     constructor() {}
 
+    static shouldCreate(group: VoiceElement[]): boolean {
+        return group.filter((x) => x instanceof Note && x.hasBeams).length >= 2;
+    }
+
     static tryCreate(group: VoiceElement[]) {
-        if (group.filter((x) => x instanceof Note && x.hasBeams).length >= 2)
-            return new BeamGroupContext();
+        if (BeamGroupContext.shouldCreate(group)) return new BeamGroupContext();
         else return null;
     }
 }
-
-// TODO: arbitrary constant
-const shortBeamLength = 0.2;
-
-// TODO: arbitrary constants!
-const beamWidth = 0.12; //getEngravingDefaults().beamThickness * lineThicknessMul;
-const beamDist = 0.03;
 
 export class Note {
     // midi-pitch
@@ -266,38 +277,28 @@ export class Note {
         return this.duration >= 8;
     }
 
-    get beats(): MusicFraction {
+    public beats(): MusicFraction {
         return MusicFraction.fromDots(this.duration, this.dots);
     }
 
-    get width(): number {
-        // TODO: calculate width!
-        // maybe calculate multiple numbers? minimum-width and ideal-width
-        return 0;
+    public measure(drawBeams: boolean): FlexDimension {
+        let d = new FlexDimension(0, 0, 0, 0);
+        const l = this.getL();
+        Note.measureAccidentals(this.accidentals, l, d);
+        Note.measureHeadAndFlags(this.duration, l, drawBeams, d);
+        Note.measureDots(this.dots, d);
+        d.ideal += defaultInterNote;
+        return d;
     }
 
-    static drawStem(
-        ctx: SVGTarget,
-        x: number,
-        yl: number,
-        w: number,
-        stemL: number,
-        upwards: boolean
-    ) {
+    static drawStem(ctx: SVGTarget, x: number, yl: number, w: number, stemL: number) {
         const dx = getEngravingDefaults().stemThickness * lineThicknessMul;
         let w0 = w - dx / 2;
+        const upwards = stemL < 0;
         if (!upwards) {
             w0 = dx / 2;
-            stemL = -stemL;
         }
-        ctx.drawLine(
-            x + w0,
-            yl,
-            x + w0,
-            yl - stemL,
-            getEngravingDefaults().stemThickness * lineThicknessMul
-        );
-
+        ctx.drawLine(x + w0, yl, x + w0, yl + stemL, dx);
         return w0;
     }
 
@@ -327,7 +328,14 @@ export class Note {
         }
     }
 
-    static drawAccidentals(ctx: SVGTarget, x: number, yl: number, accidentals: string[]) {
+    static measureAccidentals(accidentals: string[], l: number, d: FlexDimension) {
+        if (accidentals.length > 0) {
+            d.addGlyph(accidentalNames[accidentals[0]], 0.125 * l);
+            d.add(accsPadding);
+        }
+    }
+
+    static drawAccidentals(ctx: SVGTarget, x: number, yl: number, accidentals: string[]): number {
         // TODO: Draw all accidentals. Or should there only be one?
         if (accidentals.length > 0) {
             const w0 = getGlyphWidth(accidentalNames[accidentals[0]]);
@@ -337,25 +345,61 @@ export class Note {
         return x;
     }
 
-    static getFlagUni(d: number, upwards: boolean) {
-        assert(d <= 1024);
-        let uniPoint = parseInt("E240", 16);
-        const level = Math.log2(d) - 3;
-        uniPoint += level * 2;
-        if (!upwards) {
-            uniPoint += 1;
+    static measureDots(dots: number, d: FlexDimension) {
+        if (dots > 0) {
+            const dDot = getGlyphWidth("augmentationDot") * dDotMul;
+            d.add(dots * dDot);
         }
-        return String.fromCodePoint(uniPoint);
     }
 
     static drawDots(ctx: SVGTarget, x: number, y: number, w: number, l: number, dots: number) {
         if (dots > 0) {
-            // TODO: arbitrary constant
-            const dDot = 0.12;
-            ctx.drawText(x + w + dDot, y + 0.125 * (l + ((l + 1) % 2)), "\uE1E7 ".repeat(dots));
-            x += dDot * dots;
+            const dDot = getGlyphWidth("augmentationDot") * dDotMul;
+            for (let i = 0; i < dots; i++) {
+                ctx.drawText(
+                    x + w + dDot,
+                    y + 0.125 * (l + ((l + 1) % 2)),
+                    getSMUFLUni("augmentationDot")
+                );
+                x += dDot;
+            }
         }
         return x;
+    }
+
+    static measureHeadAndFlags(d: number, l: number, drawBeams: boolean, fd: FlexDimension) {
+        const upwards = Note.getStemDirection(l) < 0;
+
+        const w0 = getGlyphWidth(Note.getNotehead(d));
+        const w1 = d >= 8 && !drawBeams ? getGlyphWidth(Note.flagName(d, upwards)) : 0;
+
+        if (upwards) {
+            fd.add(w0 + w1);
+        } else {
+            fd.add(Math.max(w0, w1));
+        }
+
+        const r = getGlyphDim(Note.getNotehead(d));
+        fd.addTop(r.t * spatium2points + 0.125 * l);
+        fd.addBot(r.b * spatium2points + 0.125 * l);
+
+        if (!drawBeams || d < 8) {
+            fd.verticalPoint(Note.getStemLength(l) + 0.125 * l);
+        }
+    }
+
+    static flagName(duration: number, upwards: boolean): string {
+        assert(duration >= 8, "this note doesn't have flags", duration);
+        return "flag" + fraction2name[duration] + (upwards ? "Up" : "Down");
+    }
+
+    static getStemDirection(l: number): number {
+        return l > 3 ? -1 : 1;
+    }
+
+    static getStemLength(l: number): number {
+        // TODO: Create longer stems if there are too many beams / flags / ledger lines
+        return 1 * Note.getStemDirection(l);
     }
 
     static drawStemWithFlags(
@@ -367,25 +411,35 @@ export class Note {
         duration: number
     ) {
         // TODO: Create longer stems if there are too many beams / flags / ledger lines
-        const stemL = 1;
-        const upwards = l > 3;
-        const w0 = Note.drawStem(ctx, x, yl, w, stemL, upwards);
+
+        const stemL = Note.getStemLength(l);
+        const w0 = Note.drawStem(ctx, x, yl, w, stemL);
 
         // flags
         if (duration >= 8) {
             ctx.drawText(
                 x + w0,
-                yl + stemL * (upwards ? -1 : 1),
-                Note.getFlagUni(duration, upwards)
+                yl + stemL,
+                getSMUFLUni(Note.flagName(duration, Note.getStemDirection(l) < 0))
             );
         }
     }
 
-    public draw(ctx: SVGTarget, x: number, y: number, g: BeamGroupContext | null) {
+    static getNotehead(duration: number): string {
+        return noteHeads[duration <= 2 ? duration : "4"];
+    }
+
+    public getL(): number {
         // TODO: clef specific!
         const clefLine = 45;
         // effective note line
         const l = clefLine - this.line;
+
+        return l;
+    }
+
+    public draw(ctx: SVGTarget, x: number, y: number, g: BeamGroupContext | null) {
+        const l = this.getL();
         // determine y positions
         const yl = y + 0.125 * l;
 
@@ -393,7 +447,7 @@ export class Note {
         x = Note.drawAccidentals(ctx, x, yl, this.accidentals);
 
         // TODO: Support other note-head shapes!
-        const noteHead = noteHeads[this.duration <= 2 ? this.duration : "4"];
+        const noteHead = Note.getNotehead(this.duration);
         const w = getGlyphWidth(noteHead);
 
         // Ledger lines
@@ -414,7 +468,6 @@ export class Note {
         // Dots
         x = Note.drawDots(ctx, x, y, w, l, this.dots);
 
-        // TODO: arbitrary constant
-        return x + w + 0.5;
+        return x + w + defaultInterNote;
     }
 }

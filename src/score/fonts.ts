@@ -40,7 +40,14 @@ export function getGlyphDim(glyph: string, font: string = "bravura"): Rect {
     }
     assert(glyph in bravura.glyphBBoxes, glyph + " is not part of bravura");
     const t = bravura.glyphBBoxes[glyph];
-    const res = { t: t.bBoxNE[1], r: t.bBoxSW[0], b: t.bBoxSW[1], l: t.bBoxNE[0] } as Rect;
+
+    // sort them: sometimes, the coordinates are not in the correct order!
+    const res = {
+        t: Math.min(t.bBoxNE[1], t.bBoxSW[1]),
+        r: Math.max(t.bBoxNE[0], t.bBoxSW[0]),
+        b: Math.max(t.bBoxNE[1], t.bBoxSW[1]),
+        l: Math.min(t.bBoxNE[0], t.bBoxSW[0]),
+    } as Rect;
     GlyphDimCache[font][glyph] = res;
     return res;
 }
@@ -53,4 +60,35 @@ export function getGlyphWidth(glyph: string, font: string = "bravura"): number {
 export function getGlyphAdvance(glyph: string, font: string = "bravura"): number {
     assert(font == "bravura", "font must be bravura");
     return bravura.glyphAdvanceWidths[glyph] * spatium2points;
+}
+
+export class FlexDimension {
+    constructor(public min: number, public ideal: number, public top: number, public bot: number) {}
+
+    public add(x: number) {
+        this.min += x;
+        this.ideal += x;
+    }
+
+    public addTop(y: number) {
+        this.top = Math.min(this.top, y);
+    }
+    public addBot(y: number) {
+        this.bot = Math.max(this.bot, y);
+    }
+
+    public verticalPoint(y: number) {
+        this.top = Math.min(this.top, y);
+        this.bot = Math.max(this.bot, y);
+    }
+
+    public addGlyph(g: string, y: number) {
+        const r = getGlyphDim(g);
+        const w = Math.abs(r.r - r.l) * spatium2points;
+        this.min += w;
+        this.ideal += w;
+        this.top = Math.min(this.top, y + r.t * spatium2points);
+        this.bot = Math.max(this.bot, y + r.b * spatium2points);
+        console.log(g, y + r.t * spatium2points, y + r.b * spatium2points);
+    }
 }

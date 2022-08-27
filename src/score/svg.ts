@@ -2,13 +2,11 @@ import { htmlEntities } from "./util";
 
 export class SVGTarget {
     private str = "";
-    private s = 50;
-
     public width: number = 1200;
     public height: number = 300;
 
-    constructor() {
-        this.str = `<svg width="${this.width}" height="${this.height}">`;
+    constructor(fullHeight: number, private s: number = 50) {
+        this.str = `<svg width="${this.width}" height="${this.s * fullHeight}">`;
     }
 
     finish() {

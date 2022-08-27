@@ -14,8 +14,8 @@ export const restDurations = {
     "𝅂": 128,
 };
 
-const rest2name = {
-    "0": "DoubleWhole",
+export const fraction2name = {
+    "0.5": "DoubleWhole",
     "1": "Whole",
     "2": "Half",
     "4": "Quarter",
@@ -48,7 +48,7 @@ export class Rest {
     public draw(ctx: SVGTarget, x: number, y: number) {
         let uniPoint = parseInt("E4E2", 16);
 
-        const restName = "rest" + rest2name[this.duration + ""];
+        const restName = "rest" + fraction2name[this.duration + ""];
         if (this.duration > 0) uniPoint += 1 + Math.log2(this.duration);
         const w = getGlyphAdvance(restName);
 

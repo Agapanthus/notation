@@ -83,8 +83,8 @@ export class MusicFraction {
             this.x = 0;
             this.y = 0;
         } else {
-            assert(y && 
-                [0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024].includes(y),
+            assert(
+                y && [0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024].includes(y),
                 "expected y to be a power of 2",
                 y
             );
@@ -95,7 +95,7 @@ export class MusicFraction {
 
     static fromDots(duration: number, dots: number) {
         assert(dots >= 0 && Number.isInteger(dots), "expected dots to be an integer", dots);
-       
+
         let x = 1;
         let y = duration * Math.pow(2, dots);
         if (dots > 0) x += Math.pow(2, dots);
@@ -106,3 +106,4 @@ export class MusicFraction {
         return !(this.x && this.y);
     }
 }
+

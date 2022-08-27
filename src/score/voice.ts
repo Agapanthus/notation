@@ -38,7 +38,16 @@ export class Voice {
 
     private content: Array<Array<VoiceElement>> = [];
 
+    private rendered = false;
+    private top = 0;
+    private bot = 0;
+
     constructor(private name: string) {}
+
+    public get height() {
+        assert(this.rendered, "must be rendered");
+        return this.bot - this.top;
+    }
 
     private parseDotsDuration(t: ScoreTraverser) {
         this.durationD = 0;
@@ -200,10 +209,18 @@ export class Voice {
         // TODO:
         // get the width and time-length of every element and map the objects to beats, so you can synchronize multiple voices
 
+        let top = 0;
+        let bot = 0;
+
         for (const group of this.content) {
+            const hasG = BeamGroupContext.shouldCreate(group);
             for (const c of group) {
                 if (c instanceof Note) {
-                    console.log(c.beats, c.width);
+                    const m = c.measure(hasG);
+                    console.log(c.beats(), m);
+                    top = Math.min(top, m.top);
+                    bot = Math.max(bot, m.bot);
+
                     // TODO
                 } else if (c instanceof Rest) {
                     // TODO
@@ -214,10 +231,20 @@ export class Voice {
                 }
             }
         }
+
+        this.top = top;
+        this.bot = bot;
+        this.rendered = true;
+
+        console.log(top, bot);
+        console.log("\n\n");
     }
 
     public draw(ctx: SVGTarget, x: number, y: number) {
-        this.render();
+        assert(this.rendered);
+
+        assert(this.top <= 0);
+        y += -this.top;
 
         const st = new Stave();
         x = st.draw(ctx, x, y);
@@ -240,6 +267,7 @@ export class Voice {
             if (g) g.drawBeams(ctx);
         }
 
-        return y + 3;
+        assert(this.bot >= 0);
+        return y + this.bot;
     }
 }

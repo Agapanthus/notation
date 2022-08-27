@@ -8,9 +8,15 @@ export function updateScore(c: TreeCursor, s: string) {
     const t = new ScoreTraverser(c, s);
 
     const voices = t.readAST();
-    const ctx = new SVGTarget();
+    let fullHeight = 0.1 // padding
+    for (const voice of Object.values(voices)) {
+        voice.render();
+        fullHeight += voice.height
+    }
 
-    let y = 1
+    const ctx = new SVGTarget(fullHeight);
+
+    let y = 0;
     for (const voice of Object.values(voices)) {
         y = voice.draw(ctx, 1, y);
     }
