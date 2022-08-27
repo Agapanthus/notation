@@ -1,6 +1,7 @@
-import { getGlyphAdvance } from "./fonts";
+import { FlexDimension, getGlyphAdvance } from "./fonts";
+import { Note } from "./note";
 import { SVGTarget } from "./svg";
-import { assert } from "./util";
+import { assert, MusicFraction } from "./util";
 
 export const restDurations = {
     "𝄺": 0,
@@ -29,6 +30,10 @@ export const fraction2name = {
     "1024": "1024th",
 };
 
+// TODO: shouldn't be constant
+const defaultRestPos = 0.125 * 4;
+const defaultRestSpacing = 0.2;
+
 export class Rest {
     private duration = 0;
     private dots = 0;
@@ -45,24 +50,30 @@ export class Rest {
         this.dots = note.dots;
     }
 
+    public beats(): MusicFraction {
+        return MusicFraction.fromDots(this.duration, this.dots);
+    }
+
+    get restName(): string {
+        return "rest" + fraction2name[this.duration + ""];
+    }
+
+    public measure(drawBeams: boolean): FlexDimension {
+        let d = new FlexDimension();
+        d.addGlyph(this.restName, defaultRestPos);
+        Note.measureDots(this.dots, d);
+        d.ideal += defaultRestSpacing;
+        return d;
+    }
+
     public draw(ctx: SVGTarget, x: number, y: number) {
         let uniPoint = parseInt("E4E2", 16);
 
-        const restName = "rest" + fraction2name[this.duration + ""];
         if (this.duration > 0) uniPoint += 1 + Math.log2(this.duration);
-        const w = getGlyphAdvance(restName);
+        const w = getGlyphAdvance(this.restName);
 
-        ctx.drawText(x, y + 0.125 * 4, String.fromCodePoint(uniPoint));
+        ctx.drawText(x, y + defaultRestPos, String.fromCodePoint(uniPoint));
 
-        // Dots
-        if (this.dots > 0) {
-            // TODO: arbitrary constant
-            const dDot = 0.12;
-            ctx.drawText(x + w + dDot, y + 0.125 * 5, "\uE1E7 ".repeat(this.dots));
-            x += dDot * this.dots;
-        }
-
-        // TODO: arbitrary constant
-        return x + w + 0.2;
+        Note.drawDots(ctx, x, y, w, 5, this.dots);
     }
 }

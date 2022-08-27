@@ -4,7 +4,7 @@ import { Rest, restDurations } from "./rest";
 import { ScoreTraverser } from "./scoreTraverser";
 import { BarLine, barLine2enum, BarLineType, Stave } from "./stave";
 import { SVGTarget } from "./svg";
-import { assert } from "./util";
+import { assert, MusicFraction } from "./util";
 
 const inOctavePitch = {
     c: 0,
@@ -41,6 +41,8 @@ export class Voice {
     private rendered = false;
     private top = 0;
     private bot = 0;
+
+    private positions: number[] = [];
 
     constructor(private name: string) {}
 
@@ -212,24 +214,46 @@ export class Voice {
         let top = 0;
         let bot = 0;
 
+        const beats: {
+            width: number;
+            ideal: number;
+            pre: number;
+            beat: MusicFraction;
+        }[] = [{ width: 0, ideal: 0, pre: 0, beat: new MusicFraction(0, 1) }];
+
         for (const group of this.content) {
             const hasG = BeamGroupContext.shouldCreate(group);
             for (const c of group) {
-                if (c instanceof Note) {
+                const p = beats[beats.length - 1];
+                if (c instanceof Note || c instanceof Rest) {
                     const m = c.measure(hasG);
-                    console.log(c.beats(), m);
                     top = Math.min(top, m.top);
                     bot = Math.max(bot, m.bot);
 
-                    // TODO
-                } else if (c instanceof Rest) {
-                    // TODO
+                    beats.push({
+                        width: m.min,
+                        ideal: m.ideal,
+                        pre: m.pre,
+                        beat: c.beats().add(p.beat).simplify(),
+                    });
                 } else if (c instanceof BarLine) {
-                    // TODO
+                    beats.push({
+                        width: c.width(),
+                        ideal: c.ideal(),
+                        pre: 0,
+                        beat: p.beat,
+                    });
                 } else {
                     assert(false, "unknown type", c);
                 }
             }
+        }
+
+        //console.log(beats.map((x) => x.beat.repr()));
+        let x = 0;
+        for (const b of beats) {
+            this.positions.push(x);
+            x += b.ideal;
         }
 
         this.top = top;
@@ -240,25 +264,31 @@ export class Voice {
         console.log("\n\n");
     }
 
-    public draw(ctx: SVGTarget, x: number, y: number) {
+    public draw(ctx: SVGTarget, x0: number, y: number) {
         assert(this.rendered);
 
         assert(this.top <= 0);
         y += -this.top;
 
         const st = new Stave();
-        x = st.draw(ctx, x, y);
+        x0 = st.draw(ctx, x0, y);
+        let x = x0;
+
+        let pi = 1;
 
         for (const group of this.content) {
             const g = BeamGroupContext.tryCreate(group);
 
             for (const c of group) {
+                x = x0 + this.positions[pi];
+                pi++;
+
                 if (c instanceof Note) {
-                    x = c.draw(ctx, x, y, g);
+                    c.draw(ctx, x, y, g);
                 } else if (c instanceof Rest) {
-                    x = c.draw(ctx, x, y);
+                    c.draw(ctx, x, y);
                 } else if (c instanceof BarLine) {
-                    x = c.draw(st, ctx, x, y);
+                    c.draw(st, ctx, x, y);
                 } else {
                     assert(false, "unknown type", c);
                 }

@@ -404,20 +404,19 @@ export class Note {
     static measureHeadAndFlags(d: number, l: number, drawBeams: boolean, fd: FlexDimension) {
         const upwards = Note.getStemDirection(l) < 0;
 
+        // note head and flag widths
         const w0 = getGlyphWidth(Note.getNotehead(d));
         const w1 = d >= 8 && !drawBeams ? getGlyphWidth(Note.flagName(d, upwards)) : 0;
-
         if (upwards) {
             fd.add(w0 + w1);
         } else {
             fd.add(Math.max(w0, w1));
         }
 
-        // note ead
+        // note head size
         const r = getGlyphDim(Note.getNotehead(d));
         fd.addTop(r.t + 0.125 * l);
         fd.addBot(r.b + 0.125 * l);
-
 
         // add flag height
         if (!drawBeams && d >= 8) {
@@ -526,7 +525,5 @@ export class Note {
 
         // Dots
         x = Note.drawDots(ctx, x, y, w, l, this.dots);
-
-        return x + w + defaultInterNote;
     }
 }

@@ -38,41 +38,66 @@ export const barLine2enum = {
     "𝄇": BarLineType.RepeatClose,
 };
 
+// TODO: arbitrary constant
+const defaultBarlineSpacing = 0.4;
+
 export class BarLine {
     constructor(private barline: BarLineType) {}
 
-    draw(s: Stave, ctx: SVGTarget, x: number, y: number) {
-        // TODO: arbitrary constant
-        const dx = 0.4;
+    public ideal(): number {
+        return defaultBarlineSpacing * 2 + this.width();
+    }
 
+    get thin() {
+        return getEngravingDefaults().thinBarlineThickness * lineThicknessMul ;
+    }
+    get thick() {
+        return getEngravingDefaults().thickBarlineThickness * lineThicknessMul * 1.5; // 1.5 because i like it
+    }
+    get sep() {
+        return getEngravingDefaults().barlineSeparation * spatium2points;
+    }
+
+    public width(): number {
+        if (this.barline == BarLineType.Single) {
+            return this.thick;
+        } else if (this.barline == BarLineType.Final) {
+            return this.thin + this.sep + this.thick;
+        } else {
+            assert(false, "unknown barline", this.barline);
+            return 0;
+        }
+    }
+
+    public draw(s: Stave, ctx: SVGTarget, x: number, y: number) {
         if (this.barline == BarLineType.Single) {
             ctx.drawLine(
-                x + dx,
+                x + defaultBarlineSpacing,
                 y + 0 * 0.125,
-                x + dx,
+                x + defaultBarlineSpacing,
                 y + 8 * 0.125,
-                getEngravingDefaults().thinBarlineThickness * lineThicknessMul
+                this.thin
             );
         } else if (this.barline == BarLineType.Final) {
             ctx.drawLine(
-                x + dx,
+                x + defaultBarlineSpacing,
                 y + 0 * 0.125,
-                x + dx,
+                x + defaultBarlineSpacing,
                 y + 8 * 0.125,
-                getEngravingDefaults().thinBarlineThickness * lineThicknessMul
+                this.thin
             );
             ctx.drawLine(
-                x + dx + getEngravingDefaults().barlineSeparation * spatium2points,
+                x + defaultBarlineSpacing + this.sep,
                 y + 0 * 0.125,
-                x + dx + getEngravingDefaults().barlineSeparation * spatium2points,
+                x + defaultBarlineSpacing + this.sep,
                 y + 8 * 0.125,
-                getEngravingDefaults().thickBarlineThickness * lineThicknessMul
+                this.thick
             );
         } else {
             assert(false, "unknown barline", this.barline);
         }
 
-        return x + dx * 2;
+        //return x + defaultBarlineSpacing * 2;
     }
 }
 

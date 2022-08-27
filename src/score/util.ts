@@ -93,7 +93,7 @@ export class MusicFraction {
         }
     }
 
-    static fromDots(duration: number, dots: number) {
+    static fromDots(duration: number, dots: number): MusicFraction {
         assert(dots >= 0 && Number.isInteger(dots), "expected dots to be an integer", dots);
 
         let x = 1;
@@ -102,8 +102,37 @@ export class MusicFraction {
         return new MusicFraction(x, y);
     }
 
+    public simplify(): MusicFraction {
+        const g = gcd(this.x, this.y);
+        this.x /= g;
+        this.y /= g;
+        return this;
+    }
+
+    public add(z: MusicFraction): MusicFraction {
+        this.x = this.x * z.y + z.x * this.y;
+        this.y *= z.y;
+        return this;
+    }
+
+    public repr(): string {
+        const whole = Math.floor(this.x / this.y);
+        return whole + " " + (this.x - whole * this.y) + "/" + this.y;
+    }
+
     get isEmpty(): boolean {
         return !(this.x && this.y);
     }
 }
 
+export function gcd(x: number, y: number): number {
+    assert(typeof x === "number" || typeof y === "number");
+    x = Math.abs(x);
+    y = Math.abs(y);
+    while (y) {
+        let t = y;
+        y = x % y;
+        x = t;
+    }
+    return x;
+}
