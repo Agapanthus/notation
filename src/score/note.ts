@@ -26,6 +26,17 @@ const defaultInterNote = 0.3;
 // TODO: arbitrary constant
 const dDotMul = 1.5;
 
+// TODO: arbitrary constant
+const minStemLength = 1;
+const minStemLengthOver = 0.125;
+const minStemLengthFlags = 0.75;
+
+// TODO: arbitrary constant
+const flagWidth = 0.25;
+
+// To make the stems look nice at noteheads. This is empirical.
+const noteHeadStemCorrectionFactor = 0.05;
+
 export const symbolicNoteDurations = {
     "𝅜": 0.5,
     "𝅝": 1,
@@ -56,6 +67,10 @@ export interface BeamGroup {
     l: number;
 }
 
+function duration2beams(duration: number): number {
+    return Math.log2(duration) - 2;
+}
+
 export class BeamGroupContext {
     private note: BeamGroup[] = [];
 
@@ -64,7 +79,7 @@ export class BeamGroupContext {
             x,
             y,
             w,
-            beams: Math.log2(duration) - 2,
+            beams: duration2beams(duration),
             l,
             yl,
         });
@@ -282,9 +297,10 @@ export class Note {
     }
 
     public measure(drawBeams: boolean): FlexDimension {
-        let d = new FlexDimension(0, 0, 0, 0);
+        let d = new FlexDimension();
         const l = this.getL();
         Note.measureAccidentals(this.accidentals, l, d);
+        d.pre = d.min;
         Note.measureHeadAndFlags(this.duration, l, drawBeams, d);
         Note.measureDots(this.dots, d);
         d.ideal += defaultInterNote;
@@ -298,12 +314,30 @@ export class Note {
         if (!upwards) {
             w0 = dx / 2;
         }
-        ctx.drawLine(x + w0, yl, x + w0, yl + stemL, dx);
+        ctx.drawLine(
+            x + w0,
+            yl + noteHeadStemCorrectionFactor * Math.sign(stemL),
+            x + w0,
+            yl + stemL,
+            dx
+        );
         return w0;
+    }
+
+    // use Math.floor to get the "natural" number
+    static numberOfLedgerLines(l: number) {
+        if (l <= -2) {
+            return -l / 2;
+        }
+        if (l >= 10) {
+            return (l - 8) / 2;
+        }
+        return 0;
     }
 
     static drawLedgerLines(ctx: SVGTarget, x: number, y: number, l: number, w: number) {
         const le = getEngravingDefaults().legerLineExtension * spatium2points;
+        // TODO: depends on system!
         if (l <= -2) {
             for (let i = -2; i >= l; i -= 2) {
                 ctx.drawLine(
@@ -380,11 +414,20 @@ export class Note {
         }
 
         const r = getGlyphDim(Note.getNotehead(d));
-        fd.addTop(r.t  + 0.125 * l);
-        fd.addBot(r.b  + 0.125 * l);
+        fd.addTop(r.t + 0.125 * l);
+        fd.addBot(r.b + 0.125 * l);
 
-        if (!drawBeams || d < 8) {
-            fd.verticalPoint(Note.getStemLength(l) + 0.125 * l);
+        if (!drawBeams) {
+            const sll = Note.getStemLength(l, d) + 0.125 * l;
+            if (d >= 8) {
+                // add flag height
+                const r = getGlyphDim(Note.flagName(d, upwards));
+                fd.addTop(r.t + sll);
+                fd.addBot(r.b + sll);
+            } else {
+                // add stem length
+                fd.verticalPoint(sll);
+            }
         }
     }
 
@@ -397,9 +440,21 @@ export class Note {
         return l > 3 ? -1 : 1;
     }
 
-    static getStemLength(l: number): number {
-        // TODO: Create longer stems if there are too many beams / flags / ledger lines
-        return 1 * Note.getStemDirection(l);
+    static getStemLength(l: number, d: number): number {
+        // the length of stem to be used with flags
+
+        let stemL = minStemLength;
+
+        // Create longer stems if there are too many flags / ledger lines
+        stemL = Math.max(
+            stemL,
+            minStemLengthOver + 2 * 0.125 * Note.numberOfLedgerLines(l)
+
+            // flags are placed on-top; we don't care about this
+            //+ flagWidth * duration2beams(d)
+        );
+
+        return stemL * Note.getStemDirection(l);
     }
 
     static drawStemWithFlags(
@@ -412,13 +467,14 @@ export class Note {
     ) {
         // TODO: Create longer stems if there are too many beams / flags / ledger lines
 
-        const stemL = Note.getStemLength(l);
+        const stemL = Note.getStemLength(l, duration);
         const w0 = Note.drawStem(ctx, x, yl, w, stemL);
 
         // flags
         if (duration >= 8) {
+            const stemWidth = getEngravingDefaults().stemThickness * lineThicknessMul;
             ctx.drawText(
-                x + w0,
+                x + w0 - stemWidth / 2,
                 yl + stemL,
                 getSMUFLUni(Note.flagName(duration, Note.getStemDirection(l) < 0))
             );

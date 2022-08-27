@@ -63,7 +63,19 @@ export function getGlyphAdvance(glyph: string, font: string = "bravura"): number
 }
 
 export class FlexDimension {
-    constructor(public min: number, public ideal: number, public top: number, public bot: number) {}
+    // minimum y pos
+    public top: number = 0;
+    // maximum y pos
+    public bot: number = 0;
+
+    // minimum width
+    public min: number = 0;
+    // width with some recommended spacing
+    public ideal: number = 0;
+    // portion of minimum width before the beat to align noteheads etc
+    public pre: number = 0;
+    
+    constructor() {}
 
     public add(x: number) {
         this.min += x;
