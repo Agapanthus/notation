@@ -33,6 +33,7 @@ const minStemLengthFlags = 0.75;
 
 // TODO: arbitrary constant
 const flagWidth = 0.25;
+const dotAfterNote = 0.1;
 
 // To make the stems look nice at noteheads. This is empirical.
 const noteHeadStemCorrectionFactor = 0.05;
@@ -369,29 +370,30 @@ export class Note {
         }
     }
 
-    static drawAccidentals(ctx: SVGTarget, x: number, yl: number, accidentals: string[]): number {
+    static drawAccidentals(ctx: SVGTarget, x: number, yl: number, accidentals: string[]) {
+        // draws the accidentals _before_ the given x
+        
         // TODO: Draw all accidentals. Or should there only be one?
         if (accidentals.length > 0) {
             const w0 = getGlyphWidth(accidentalNames[accidentals[0]]);
-            ctx.drawText(x, yl, getSMUFLUni(accidentalNames[accidentals[0]]));
-            x += w0 + accsPadding;
+            ctx.drawText(x - w0 - accsPadding, yl, getSMUFLUni(accidentalNames[accidentals[0]]));
         }
-        return x;
     }
 
     static measureDots(dots: number, d: FlexDimension) {
         if (dots > 0) {
             const dDot = getGlyphWidth("augmentationDot") * dDotMul;
-            d.add(dots * dDot);
+            d.add(dots * dDot + dotAfterNote);
         }
     }
 
     static drawDots(ctx: SVGTarget, x: number, y: number, w: number, l: number, dots: number) {
         if (dots > 0) {
             const dDot = getGlyphWidth("augmentationDot") * dDotMul;
+            x += dotAfterNote;
             for (let i = 0; i < dots; i++) {
                 ctx.drawText(
-                    x + w + dDot,
+                    x + w,
                     y + 0.125 * (l + ((l + 1) % 2)),
                     getSMUFLUni("augmentationDot")
                 );
@@ -417,6 +419,18 @@ export class Note {
         const r = getGlyphDim(Note.getNotehead(d));
         fd.addTop(r.t + 0.125 * l);
         fd.addBot(r.b + 0.125 * l);
+
+        // ledger line extension protection
+        /*if (Note.numberOfLedgerLines(l) > 0) {
+            let count = 0;
+            if (dots > 0) count++;
+            if (accs > 0) count++;
+            fd.add(((getEngravingDefaults().legerLineExtension * spatium2points) / 2) * count);
+            fd.pre = Math.max(
+                fd.pre,
+                (getEngravingDefaults().legerLineExtension * spatium2points) / 2
+            );
+        }*/
 
         // add flag height
         if (!drawBeams && d >= 8) {
@@ -502,7 +516,7 @@ export class Note {
         const yl = y + 0.125 * l;
 
         // accidentals
-        x = Note.drawAccidentals(ctx, x, yl, this.accidentals);
+        Note.drawAccidentals(ctx, x, yl, this.accidentals);
 
         // TODO: Support other note-head shapes!
         const noteHead = Note.getNotehead(this.duration);

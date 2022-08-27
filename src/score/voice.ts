@@ -43,6 +43,7 @@ export class Voice {
     private bot = 0;
 
     private positions: number[] = [];
+    private pres: number[] = [];
 
     constructor(private name: string) {}
 
@@ -253,7 +254,10 @@ export class Voice {
         let x = 0;
         for (const b of beats) {
             this.positions.push(x);
-            x += b.ideal;
+            this.pres.push(b.pre);
+            // TODO:  use the beats to properly space things
+            // TODO: Replace ideal width with space addition parameters; i.e. it's not just a factor, e.g. a dotted note doesn't want to be treated different from a not-dotted note once the space is large enough to fit the dot anyways, i.e., the dotted note shouldn't get more space than the normal one
+            x += b.ideal; // b.width + 0.3;
         }
 
         this.top = top;
@@ -280,7 +284,7 @@ export class Voice {
             const g = BeamGroupContext.tryCreate(group);
 
             for (const c of group) {
-                x = x0 + this.positions[pi];
+                x = x0 + this.positions[pi] + this.pres[pi];
                 pi++;
 
                 if (c instanceof Note) {

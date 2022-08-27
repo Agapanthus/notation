@@ -45,11 +45,11 @@ export class BarLine {
     constructor(private barline: BarLineType) {}
 
     public ideal(): number {
-        return defaultBarlineSpacing * 2 + this.width();
+        return defaultBarlineSpacing + this.width();
     }
 
     get thin() {
-        return getEngravingDefaults().thinBarlineThickness * lineThicknessMul ;
+        return getEngravingDefaults().thinBarlineThickness * lineThicknessMul;
     }
     get thick() {
         return getEngravingDefaults().thickBarlineThickness * lineThicknessMul * 1.5; // 1.5 because i like it
@@ -60,9 +60,9 @@ export class BarLine {
 
     public width(): number {
         if (this.barline == BarLineType.Single) {
-            return this.thick;
+            return this.thick + this.sep;
         } else if (this.barline == BarLineType.Final) {
-            return this.thin + this.sep + this.thick;
+            return this.sep + this.thin + this.sep + this.thick + this.sep;
         } else {
             assert(false, "unknown barline", this.barline);
             return 0;
@@ -70,29 +70,13 @@ export class BarLine {
     }
 
     public draw(s: Stave, ctx: SVGTarget, x: number, y: number) {
+        x += this.sep;
+
         if (this.barline == BarLineType.Single) {
-            ctx.drawLine(
-                x + defaultBarlineSpacing,
-                y + 0 * 0.125,
-                x + defaultBarlineSpacing,
-                y + 8 * 0.125,
-                this.thin
-            );
+            ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, this.thin);
         } else if (this.barline == BarLineType.Final) {
-            ctx.drawLine(
-                x + defaultBarlineSpacing,
-                y + 0 * 0.125,
-                x + defaultBarlineSpacing,
-                y + 8 * 0.125,
-                this.thin
-            );
-            ctx.drawLine(
-                x + defaultBarlineSpacing + this.sep,
-                y + 0 * 0.125,
-                x + defaultBarlineSpacing + this.sep,
-                y + 8 * 0.125,
-                this.thick
-            );
+            ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, this.thin);
+            ctx.drawLine(x + this.sep, y + 0 * 0.125, x + this.sep, y + 8 * 0.125, this.thick);
         } else {
             assert(false, "unknown barline", this.barline);
         }
