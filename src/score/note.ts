@@ -380,8 +380,8 @@ export class Note {
         }
 
         const r = getGlyphDim(Note.getNotehead(d));
-        fd.addTop(r.t * spatium2points + 0.125 * l);
-        fd.addBot(r.b * spatium2points + 0.125 * l);
+        fd.addTop(r.t  + 0.125 * l);
+        fd.addBot(r.b  + 0.125 * l);
 
         if (!drawBeams || d < 8) {
             fd.verticalPoint(Note.getStemLength(l) + 0.125 * l);

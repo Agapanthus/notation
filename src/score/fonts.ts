@@ -43,10 +43,10 @@ export function getGlyphDim(glyph: string, font: string = "bravura"): Rect {
 
     // sort them: sometimes, the coordinates are not in the correct order!
     const res = {
-        t: Math.min(t.bBoxNE[1], t.bBoxSW[1]),
-        r: Math.max(t.bBoxNE[0], t.bBoxSW[0]),
-        b: Math.max(t.bBoxNE[1], t.bBoxSW[1]),
-        l: Math.min(t.bBoxNE[0], t.bBoxSW[0]),
+        t: Math.min(t.bBoxNE[1], t.bBoxSW[1]) * spatium2points,
+        r: Math.max(t.bBoxNE[0], t.bBoxSW[0]) * spatium2points,
+        b: Math.max(t.bBoxNE[1], t.bBoxSW[1]) * spatium2points,
+        l: Math.min(t.bBoxNE[0], t.bBoxSW[0]) * spatium2points,
     } as Rect;
     GlyphDimCache[font][glyph] = res;
     return res;
@@ -54,7 +54,7 @@ export function getGlyphDim(glyph: string, font: string = "bravura"): Rect {
 
 export function getGlyphWidth(glyph: string, font: string = "bravura"): number {
     const r = getGlyphDim(glyph, font);
-    return Math.abs(r.r - r.l) * spatium2points;
+    return Math.abs(r.r - r.l);
 }
 
 export function getGlyphAdvance(glyph: string, font: string = "bravura"): number {
@@ -84,11 +84,10 @@ export class FlexDimension {
 
     public addGlyph(g: string, y: number) {
         const r = getGlyphDim(g);
-        const w = Math.abs(r.r - r.l) * spatium2points;
+        const w = Math.abs(r.r - r.l);
         this.min += w;
         this.ideal += w;
-        this.top = Math.min(this.top, y + r.t * spatium2points);
-        this.bot = Math.max(this.bot, y + r.b * spatium2points);
-        console.log(g, y + r.t * spatium2points, y + r.b * spatium2points);
+        this.top = Math.min(this.top, y + r.t);
+        this.bot = Math.max(this.bot, y + r.b);
     }
 }
