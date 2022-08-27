@@ -413,20 +413,24 @@ export class Note {
             fd.add(Math.max(w0, w1));
         }
 
+        // note ead
         const r = getGlyphDim(Note.getNotehead(d));
         fd.addTop(r.t + 0.125 * l);
         fd.addBot(r.b + 0.125 * l);
 
+
         // add flag height
         if (!drawBeams && d >= 8) {
             const r = getGlyphDim(Note.flagName(d, upwards));
-            fd.addTop(r.t + 0.125 * l + Note.getStemLength(l, d));
-            fd.addBot(r.b + 0.125 * l + Note.getStemLength(l, d));
+            const sll = 0.125 * l + Note.getStemLength(l, d);
+            fd.addTop(r.t + sll);
+            fd.addBot(r.b + sll);
         }
 
         // add stem length
         if (!drawBeams || d < 8) {
-            fd.verticalPoint(Note.getStemLength(l, d) + 0.125 * l);
+            const sll = 0.125 * l + Note.getStemLength(l, d);
+            fd.verticalPoint(sll);
         }
     }
 
