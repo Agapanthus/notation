@@ -417,17 +417,16 @@ export class Note {
         fd.addTop(r.t + 0.125 * l);
         fd.addBot(r.b + 0.125 * l);
 
-        if (!drawBeams) {
-            const sll = Note.getStemLength(l, d) + 0.125 * l;
-            if (d >= 8) {
-                // add flag height
-                const r = getGlyphDim(Note.flagName(d, upwards));
-                fd.addTop(r.t + sll);
-                fd.addBot(r.b + sll);
-            } else {
-                // add stem length
-                fd.verticalPoint(sll);
-            }
+        // add flag height
+        if (!drawBeams && d >= 8) {
+            const r = getGlyphDim(Note.flagName(d, upwards));
+            fd.addTop(r.t + 0.125 * l + Note.getStemLength(l, d));
+            fd.addBot(r.b + 0.125 * l + Note.getStemLength(l, d));
+        }
+
+        // add stem length
+        if (!drawBeams || d < 8) {
+            fd.verticalPoint(Note.getStemLength(l, d) + 0.125 * l);
         }
     }
 
