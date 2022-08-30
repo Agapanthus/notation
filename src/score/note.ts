@@ -95,6 +95,9 @@ export class BeamGroupContext {
             return null;
         }
 
+        // TODO: this algorithm is crap.
+        // Other idea: set the beam based on the first and last note and iterate some stem lengths. If the separation of the noteheads in between makes sense, use this division. Otherwise, stick to the default.
+
         // consider placing the beam in between
         // try to partition the note heads
         // to do so, adjust the note heads using the slope and the average
@@ -233,7 +236,7 @@ export class BeamGroupContext {
                             xs -= shortBeamLength;
 
                             // if the beams to the left don't allow a "beamlet", draw it in the other direction
-                            if (beamCounts[i - 2] <= beamCounts[i] - 1) {
+                            if (i - 2 < 0 || beamCounts[i - 2] <= beamCounts[i] - 1) {
                                 xs += 2 * shortBeamLength;
                             }
                         }
@@ -372,7 +375,7 @@ export class Note {
 
     static drawAccidentals(ctx: SVGTarget, x: number, yl: number, accidentals: string[]) {
         // draws the accidentals _before_ the given x
-        
+
         // TODO: Draw all accidentals. Or should there only be one?
         if (accidentals.length > 0) {
             const w0 = getGlyphWidth(accidentalNames[accidentals[0]]);
@@ -538,6 +541,6 @@ export class Note {
         }
 
         // Dots
-        x = Note.drawDots(ctx, x, y, w, l, this.dots);
+        Note.drawDots(ctx, x, y, w, l, this.dots);
     }
 }

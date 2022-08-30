@@ -4,7 +4,7 @@ import { Rest, restDurations } from "./rest";
 import { ScoreTraverser } from "./scoreTraverser";
 import { BarLine, barLine2enum, BarLineType, Stave } from "./stave";
 import { SVGTarget } from "./svg";
-import { assert, MusicFraction } from "./util";
+import { assert, MusicFraction, sum } from "./util";
 
 const inOctavePitch = {
     c: 0,
@@ -29,6 +29,15 @@ const inOctaveLine = {
 };
 
 export type VoiceElement = Note | Rest | BarLine;
+
+export enum BeatType {
+    Normal,
+    Bar,
+}
+
+// TODO: constant
+const spacingBeatAffinityReferenceSize = 1.0;
+const beatLengthExp = 0.5;
 
 export class Voice {
     private duration: number = 4;
@@ -215,34 +224,50 @@ export class Voice {
         let top = 0;
         let bot = 0;
 
+        // TODO: adjust top and bottom based on stave! (otherwise, things can overlap if notes are only in the upper part etc...)
+
         const beats: {
             width: number;
             ideal: number;
             pre: number;
-            beat: MusicFraction;
-        }[] = [{ width: 0, ideal: 0, pre: 0, beat: new MusicFraction(0, 1) }];
+            // beat: MusicFraction;
+            len: number;
+            type: BeatType
+        }[] = [
+            {
+                width: 0,
+                ideal: 0,
+                pre: 0,
+                len: 0,
+                type: BeatType.Bar,
+                // beat: new MusicFraction(0, 1)
+            },
+        ];
 
         for (const group of this.content) {
             const hasG = BeamGroupContext.shouldCreate(group);
             for (const c of group) {
+                // previous beat
                 const p = beats[beats.length - 1];
+
                 if (c instanceof Note || c instanceof Rest) {
                     const m = c.measure(hasG);
                     top = Math.min(top, m.top);
                     bot = Math.max(bot, m.bot);
-
                     beats.push({
                         width: m.min,
                         ideal: m.ideal,
                         pre: m.pre,
-                        beat: c.beats().add(p.beat).simplify(),
+                        len: c.beats().num, //c.beats().add(p.beat).simplify(),
+                        type: BeatType.Normal,
                     });
                 } else if (c instanceof BarLine) {
                     beats.push({
                         width: c.width(),
                         ideal: c.ideal(),
                         pre: 0,
-                        beat: p.beat,
+                        len: 0,
+                        type: BeatType.Bar,
                     });
                 } else {
                     assert(false, "unknown type", c);
@@ -250,14 +275,18 @@ export class Voice {
             }
         }
 
-        //console.log(beats.map((x) => x.beat.repr()));
+        // use the ideal with as reference
+        const referenceSize = sum(beats.map((x) => x.ideal)) * spacingBeatAffinityReferenceSize;
+        const lengthBeats = sum(beats.map((x) => Math.pow(x.len, beatLengthExp)));
+        const singleBeatWidth = referenceSize / lengthBeats;
+
         let x = 0;
-        for (const b of beats) {
+        for (let i = 0; i < beats.length; i++) {
+            const b = beats[i];
             this.positions.push(x);
             this.pres.push(b.pre);
-            // TODO:  use the beats to properly space things
             // TODO: Replace ideal width with space addition parameters; i.e. it's not just a factor, e.g. a dotted note doesn't want to be treated different from a not-dotted note once the space is large enough to fit the dot anyways, i.e., the dotted note shouldn't get more space than the normal one
-            x += b.ideal; // b.width + 0.3;
+            x += Math.max(singleBeatWidth * (i == 0 ? 0 : Math.pow(b.len, beatLengthExp)), b.ideal);
         }
 
         this.top = top;

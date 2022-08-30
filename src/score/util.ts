@@ -78,6 +78,12 @@ export class MusicFraction {
     public x: number;
     public y: number;
 
+    get num(): number {
+        if (this.x == 0) return this.x;
+        assert(this.y != 0);
+        return this.x / this.y;
+    }
+
     constructor(x: number | null = null, y: number | null = null) {
         if (x === null) {
             this.x = 0;
@@ -103,6 +109,8 @@ export class MusicFraction {
     }
 
     public simplify(): MusicFraction {
+        if (this.x == 0) return this;
+        assert(this.y != 0, "y must not be 0");
         const g = gcd(this.x, this.y);
         this.x /= g;
         this.y /= g;
@@ -110,12 +118,19 @@ export class MusicFraction {
     }
 
     public add(z: MusicFraction): MusicFraction {
-        this.x = this.x * z.y + z.x * this.y;
-        this.y *= z.y;
+        if (z.x == 0) return this;
+        if (this.x == 0) {
+            this.x = z.x;
+            this.y = z.y;
+        } else {
+            this.x = this.x * z.y + z.x * this.y;
+            this.y *= z.y;
+        }
         return this;
     }
 
     public repr(): string {
+        if (this.x == 0) return "0/" + this.y;
         const whole = Math.floor(this.x / this.y);
         return whole + " " + (this.x - whole * this.y) + "/" + this.y;
     }

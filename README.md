@@ -2,7 +2,7 @@
 
 An online text-based editor and language for quickly writing and engraving musical scores.
 
-It's focused on "just the right amount of programmability" to ease the as a notepad for composers.
+It's focused on "just the right amount of programmability" to ease the use-case of a notepad for composers.
 
 ## Contributing
 
