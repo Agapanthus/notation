@@ -2,6 +2,8 @@ module.exports = (env) => {
     console.log("Environment: ", env);
 
     const path = require("path");
+    const webpack = require("webpack");
+    const LodashModuleReplacementPlugin = require("lodash-webpack-plugin");
 
     const RELEASE = !(env && env.debug); // Development only! Use Release for Release!
     const RELEASE_SOURCE_MAPS = false; // false or "source-map" (extremely slow)
@@ -14,6 +16,11 @@ module.exports = (env) => {
         new MomentLocalesPlugin({
             localesToKeep: ["de"],
         }),
+        new webpack.ProvidePlugin({
+            $: "jquery",
+            jQuery: "jquery",
+        }),
+        new LodashModuleReplacementPlugin(),
     ];
 
     if (RELEASE) {
@@ -71,6 +78,7 @@ module.exports = (env) => {
         },
         plugins: plugs,
         module: {
+            noParse: [/benchmark/],
             rules: [
                 {
                     test: /\.(png|jp(e*)g|svg)$/,

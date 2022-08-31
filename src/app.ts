@@ -3,8 +3,12 @@ import Vue from "vue";
 import { store } from "./storage/storage";
 import App from "./components/app.vue";
 import { createEditor } from "./editor/codemirror";
+import * as Benchmark from "./score/littleBenchmark";
 
 window.onload = () => {
+    //Benchmark.sum();
+    //return;
+
     const v = new Vue({
         el: "#GUIBase",
         render: (h) => h(App),

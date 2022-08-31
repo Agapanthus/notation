@@ -28,16 +28,43 @@ const inOctaveLine = {
     h: 6,
 };
 
+
+
+
+// TODO: constant
+const spacingBeatAffinityReferenceSize = 1.0;
+const beatLengthExp = 0.5;
+
+
 export type VoiceElement = Note | Rest | BarLine;
 
 export enum BeatType {
     Normal,
     Bar,
+    Empty,
 }
 
-// TODO: constant
-const spacingBeatAffinityReferenceSize = 1.0;
-const beatLengthExp = 0.5;
+export interface SystemBeatSpacing {
+    width: number;
+    ideal: number;
+    pre: number;
+    // beat: MusicFraction;
+    len: number;
+    type: BeatType;
+    top: number;
+    bot: number;
+}
+function newEmptySystemBeatSpacing() {
+    return {
+        width: 0,
+        ideal: 0,
+        pre: 0,
+        len: 0,
+        type: BeatType.Empty,
+        top: 0,
+        bot: 0,
+    };
+}
 
 export class Voice {
     private duration: number = 4;
@@ -221,28 +248,9 @@ export class Voice {
         // TODO:
         // get the width and time-length of every element and map the objects to beats, so you can synchronize multiple voices
 
-        let top = 0;
-        let bot = 0;
-
         // TODO: adjust top and bottom based on stave! (otherwise, things can overlap if notes are only in the upper part etc...)
 
-        const beats: {
-            width: number;
-            ideal: number;
-            pre: number;
-            // beat: MusicFraction;
-            len: number;
-            type: BeatType
-        }[] = [
-            {
-                width: 0,
-                ideal: 0,
-                pre: 0,
-                len: 0,
-                type: BeatType.Bar,
-                // beat: new MusicFraction(0, 1)
-            },
-        ];
+        const beats: SystemBeatSpacing[] = [newEmptySystemBeatSpacing()];
 
         for (const group of this.content) {
             const hasG = BeamGroupContext.shouldCreate(group);
@@ -252,14 +260,14 @@ export class Voice {
 
                 if (c instanceof Note || c instanceof Rest) {
                     const m = c.measure(hasG);
-                    top = Math.min(top, m.top);
-                    bot = Math.max(bot, m.bot);
                     beats.push({
                         width: m.min,
                         ideal: m.ideal,
                         pre: m.pre,
                         len: c.beats().num, //c.beats().add(p.beat).simplify(),
                         type: BeatType.Normal,
+                        top: m.top,
+                        bot: m.bot,
                     });
                 } else if (c instanceof BarLine) {
                     beats.push({
@@ -268,6 +276,8 @@ export class Voice {
                         pre: 0,
                         len: 0,
                         type: BeatType.Bar,
+                        top: 0,
+                        bot: 0,
                     });
                 } else {
                     assert(false, "unknown type", c);
@@ -275,10 +285,16 @@ export class Voice {
             }
         }
 
+        const top = Math.min(...beats.map((x) => x.top));
+        const bot = Math.max(...beats.map((x) => x.bot));
+
         // use the ideal with as reference
         const referenceSize = sum(beats.map((x) => x.ideal)) * spacingBeatAffinityReferenceSize;
         const lengthBeats = sum(beats.map((x) => Math.pow(x.len, beatLengthExp)));
         const singleBeatWidth = referenceSize / lengthBeats;
+
+        // TODO: measure how much you can fit in a row and break accordingly
+        // TODO: Synchronize beats / bars between voices and build systems
 
         let x = 0;
         for (let i = 0; i < beats.length; i++) {

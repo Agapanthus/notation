@@ -64,12 +64,28 @@ export function linearRegression(x: number[], y: number[], calcAll: boolean = fa
     return [m, b, r];
 }
 
-export function sum(x: number[]): number {
-    return x.reduce((p, c) => p + c);
+export function sum(arr: number[]): number {
+    let res = 0;
+    for (const x of arr) {
+        res += x;
+    }
+    return res;
 }
 
-export function average(x: number[]): number {
-    return x.reduce((p, c) => p + c) / x.length;
+export function eSum(arr: { [key: string]: any }[], el: string): number {
+    let res = 0;
+    for (const x of arr) {
+        res += x[el];
+    }
+    return res;
+}
+
+export function average(arr: number[]): number {
+    let res = 0;
+    for (const x of arr) {
+        res += x;
+    }
+    return res / arr.length;
 }
 
 export class MusicFraction {
