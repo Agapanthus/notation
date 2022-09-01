@@ -48,21 +48,19 @@ export class BarLine {
         return defaultBarlineSpacing + this.width();
     }
 
-    get thin() {
-        return getEngravingDefaults().thinBarlineThickness * lineThicknessMul;
-    }
-    get thick() {
-        return getEngravingDefaults().thickBarlineThickness * lineThicknessMul * 1.5; // 1.5 because i like it
-    }
-    get sep() {
-        return getEngravingDefaults().barlineSeparation * spatium2points;
+    static thin = getEngravingDefaults().thinBarlineThickness * lineThicknessMul;
+    static thick = getEngravingDefaults().thickBarlineThickness * lineThicknessMul * 1.5; // 1.5 because i like it
+    static sep = getEngravingDefaults().barlineSeparation * spatium2points;
+
+    static removeIdealOnehand() {
+        return defaultBarlineSpacing + BarLine.sep;
     }
 
     public width(): number {
         if (this.barline == BarLineType.Single) {
-            return this.thick + this.sep;
+            return BarLine.thick + BarLine.sep;
         } else if (this.barline == BarLineType.Final) {
-            return this.sep + this.thin + this.sep + this.thick + this.sep;
+            return BarLine.sep + BarLine.thin + BarLine.sep + BarLine.thick + BarLine.sep;
         } else {
             assert(false, "unknown barline", this.barline);
             return 0;
@@ -70,13 +68,19 @@ export class BarLine {
     }
 
     public draw(s: Stave, ctx: SVGTarget, x: number, y: number) {
-        x += this.sep;
+        x += BarLine.sep;
 
         if (this.barline == BarLineType.Single) {
-            ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, this.thin);
+            ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, BarLine.thin);
         } else if (this.barline == BarLineType.Final) {
-            ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, this.thin);
-            ctx.drawLine(x + this.sep, y + 0 * 0.125, x + this.sep, y + 8 * 0.125, this.thick);
+            ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, BarLine.thin);
+            ctx.drawLine(
+                x + BarLine.sep,
+                y + 0 * 0.125,
+                x + BarLine.sep,
+                y + 8 * 0.125,
+                BarLine.thick
+            );
         } else {
             assert(false, "unknown barline", this.barline);
         }
@@ -107,11 +111,9 @@ export class Stave {
 
     constructor() {}
 
-    
     static defaultDefaultWidth() {
         return (
-            (getGlyphAdvance(ClefType[ClefType.gClef]) + 2 * Stave.clefDx + Stave.initialDx) *
-            1.0
+            (getGlyphAdvance(ClefType[ClefType.gClef]) + 2 * Stave.clefDx + Stave.initialDx) * 1.0
         );
     }
 

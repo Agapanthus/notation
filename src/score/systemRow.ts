@@ -1,5 +1,5 @@
 import { sum } from "lodash";
-import { NewGroup, SystemBeatSpacing, VoiceElement } from "./beat";
+import { BeatType, NewGroup, SystemBeatSpacing, VoiceElement } from "./beat";
 import { BeamGroupContext, Note } from "./note";
 import { Rest } from "./rest";
 import { BarLine, Stave } from "./stave";
@@ -8,7 +8,7 @@ import { assert } from "./util";
 
 // TODO: constant
 const spacingBeatAffinityReferenceSize = 1.0;
-const beatLengthExp = 0.5;
+const beatLengthExp = 0.6;
 
 export class SystemRow {
     private positions: number[] = [];
@@ -21,28 +21,51 @@ export class SystemRow {
 
     private st: Stave;
 
-    private render(beats: SystemBeatSpacing[]) {
+    private render(beats: SystemBeatSpacing[], w: number) {
         // use the ideal with as reference
-        const referenceSize = sum(beats.map((x) => x.ideal)) * spacingBeatAffinityReferenceSize;
+        const referenceSize = w; // sum(beats.map((x) => x.ideal)) * spacingBeatAffinityReferenceSize;
         const lengthBeats = sum(beats.map((x) => Math.pow(x.len, beatLengthExp)));
         const singleBeatWidth = referenceSize / lengthBeats;
 
         let x = 0;
+
+        // binary search to find a good scale
+        // TODO: calculate this directly. Binary search is a hack
+        let correction = 1.0;
+        for (let i = 1; i < 10; i++) {
+            x = 0;
+            for (const b of beats) {
+                x += Math.max(
+                    correction * singleBeatWidth * Math.pow(b.len, beatLengthExp),
+                    b.ideal
+                );
+            }
+
+            // TODO: this should be done in a smarter way using smart spacing...
+            if (beats[beats.length - 1].type == BeatType.Bar) x -= BarLine.removeIdealOnehand();
+
+            if (x > w) correction -= Math.pow(2, -i);
+            else if (x < w) correction += Math.pow(2, -i);
+            else break;
+        }
+
+        // calculate the positions 
+        x = 0;
         for (let i = 0; i < beats.length; i++) {
             const b = beats[i];
             this.positions.push(x);
 
             // TODO: Replace ideal width with space addition parameters; i.e. it's not just a factor, e.g. a dotted note doesn't want to be treated different from a not-dotted note once the space is large enough to fit the dot anyways, i.e., the dotted note shouldn't get more space than the normal one
-            x += b.ideal; // Math.max(singleBeatWidth * (i == 0 ? 0 : Math.pow(b.len, beatLengthExp)), b.ideal);
+            x += Math.max(correction * singleBeatWidth * Math.pow(b.len, beatLengthExp), b.ideal);
         }
 
         assert(this.positions.length == beats.length);
     }
 
-    constructor(content: Array<VoiceElement>, beats: SystemBeatSpacing[]) {
+    constructor(content: Array<VoiceElement>, beats: SystemBeatSpacing[], w: number) {
         this.content = content;
         this.pres = beats.map((x) => x.pre);
-        this.render(beats);
+        this.render(beats, w);
 
         this.top = Math.min(...beats.map((x) => x.top));
         this.bot = Math.max(...beats.map((x) => x.bot));

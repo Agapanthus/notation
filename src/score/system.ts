@@ -14,15 +14,24 @@ export class System {
     constructor(private voices: Voice[]) {}
     private rendered = false;
 
-    private appendRow(voice: Voice, beats: SystemBeatSpacing[], from: number, to: number) {
+    private appendRow(
+        voice: Voice,
+        beats: SystemBeatSpacing[],
+        from: number,
+        to: number,
+        maxW: number
+    ) {
         if (from == to) return;
         assert(from < to);
-        this.rows.push(new SystemRow(voice.content.slice(from, to), beats.slice(from, to)));
+        this.rows.push(new SystemRow(voice.content.slice(from, to), beats.slice(from, to), maxW));
         this.fullHeight += this.rows[this.rows.length - 1].height + interStaveSpace;
     }
 
     public render(maxWidth: number) {
         this.fullHeight = 0.1; // padding
+
+        // TODO: this should be calculated in a smarter way; i.e., using different types of growable margins for notes
+        const maxW = maxWidth - Stave.defaultDefaultWidth();
 
         assert(this.rows.length == 0, "render must be called at most once");
 
@@ -50,25 +59,25 @@ export class System {
                         // TODO: Requires emergency break! (i.e., not at a barline)
                         console.log("emergency break");
                     } else {
-                        console.log("break", i, x)
+                        console.log("break", i, x);
                         assert(lastI < lastBreakableI);
-                        this.appendRow(voice, beats, lastI, lastBreakableI);
+                        this.appendRow(voice, beats, lastI, lastBreakableI, maxW);
                         lastI = lastBreakableI;
                         x -= lastBreakableX;
 
-                        x += Stave.defaultDefaultWidth()
+                        x += Stave.defaultDefaultWidth();
                     }
                 }
 
                 if (b.type == BeatType.Bar) {
-                    console.log("breakable", i, x)
+                    console.log("breakable", i, x);
 
                     lastBreakableI = i + 1;
                     lastBreakableX = x;
                 }
             }
 
-            this.appendRow(voice, beats, lastI, beats.length);
+            this.appendRow(voice, beats, lastI, beats.length, maxW);
         }
 
         this.rendered = true;
