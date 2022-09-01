@@ -1,7 +1,8 @@
 import { FlexDimension, getGlyphAdvance } from "./fonts";
+import { MusicFraction } from "./musicFraction";
 import { Note } from "./note";
 import { SVGTarget } from "./svg";
-import { assert, MusicFraction } from "./util";
+import { assert } from "./util";
 
 export const restDurations = {
     "𝄺": 0,
@@ -26,7 +27,7 @@ export const fraction2name = {
     "64": "64th",
     "128": "128th",
     "256": "256th",
-    "512": "512nd",
+    "512": "512th",
     "1024": "1024th",
 };
 

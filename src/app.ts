@@ -16,7 +16,7 @@ window.onload = () => {
     });
 
     createEditor(
-        "violin: 2f4f8f16f16f | 8+a3-e6.g8c' h'6c''a,8d'' | 2.++h' 𝄽 | o4 0a 16.e3g c' brh | 4. a, c'''\nviola: a𝅘𝅥𝅯bc𝄽r𝄂 c'd,hc'\n"
+        "violin: 2f4f8f6ff | 8+a3-e6.g8c' h'6c''a,8d'' | 2.++h'𝄽 | o4 0a 16.e3g c' brh |\nviola: a𝅘𝅥𝅯bc𝄽r𝄂 c'd,hc'\nviolin: 4. a, 512 c'''\n"
     );
 
     console.log("loading done!");
