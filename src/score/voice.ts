@@ -1,4 +1,5 @@
 import { accidentalEffects } from "./accidental";
+import { BeatType, newEmptySystemBeatSpacing, SystemBeatSpacing, VoiceElement } from "./beat";
 import { BeamGroupContext, Note, symbolicNoteDurations } from "./note";
 import { Rest, restDurations } from "./rest";
 import { ScoreTraverser } from "./scoreTraverser";
@@ -28,65 +29,15 @@ const inOctaveLine = {
     h: 6,
 };
 
-
-
-
-// TODO: constant
-const spacingBeatAffinityReferenceSize = 1.0;
-const beatLengthExp = 0.5;
-
-
-export type VoiceElement = Note | Rest | BarLine;
-
-export enum BeatType {
-    Normal,
-    Bar,
-    Empty,
-}
-
-export interface SystemBeatSpacing {
-    width: number;
-    ideal: number;
-    pre: number;
-    // beat: MusicFraction;
-    len: number;
-    type: BeatType;
-    top: number;
-    bot: number;
-}
-function newEmptySystemBeatSpacing() {
-    return {
-        width: 0,
-        ideal: 0,
-        pre: 0,
-        len: 0,
-        type: BeatType.Empty,
-        top: 0,
-        bot: 0,
-    };
-}
-
 export class Voice {
     private duration: number = 4;
     private durationD: number = 0;
     private octave: number = 5;
     private newGroup = false;
 
-    private content: Array<Array<VoiceElement>> = [];
-
-    private rendered = false;
-    private top = 0;
-    private bot = 0;
-
-    private positions: number[] = [];
-    private pres: number[] = [];
+    public content: Array<Array<VoiceElement>> = [];
 
     constructor(private name: string) {}
-
-    public get height() {
-        assert(this.rendered, "must be rendered");
-        return this.bot - this.top;
-    }
 
     private parseDotsDuration(t: ScoreTraverser) {
         this.durationD = 0;
@@ -244,7 +195,7 @@ export class Voice {
     }
 
     // render width and so on for every element
-    public render() {
+    public collect(): SystemBeatSpacing[] {
         // TODO:
         // get the width and time-length of every element and map the objects to beats, so you can synchronize multiple voices
 
@@ -285,68 +236,6 @@ export class Voice {
             }
         }
 
-        const top = Math.min(...beats.map((x) => x.top));
-        const bot = Math.max(...beats.map((x) => x.bot));
-
-        // use the ideal with as reference
-        const referenceSize = sum(beats.map((x) => x.ideal)) * spacingBeatAffinityReferenceSize;
-        const lengthBeats = sum(beats.map((x) => Math.pow(x.len, beatLengthExp)));
-        const singleBeatWidth = referenceSize / lengthBeats;
-
-        // TODO: measure how much you can fit in a row and break accordingly
-        // TODO: Synchronize beats / bars between voices and build systems
-
-        let x = 0;
-        for (let i = 0; i < beats.length; i++) {
-            const b = beats[i];
-            this.positions.push(x);
-            this.pres.push(b.pre);
-            // TODO: Replace ideal width with space addition parameters; i.e. it's not just a factor, e.g. a dotted note doesn't want to be treated different from a not-dotted note once the space is large enough to fit the dot anyways, i.e., the dotted note shouldn't get more space than the normal one
-            x += Math.max(singleBeatWidth * (i == 0 ? 0 : Math.pow(b.len, beatLengthExp)), b.ideal);
-        }
-
-        this.top = top;
-        this.bot = bot;
-        this.rendered = true;
-
-        console.log(top, bot);
-        console.log("\n\n");
-    }
-
-    public draw(ctx: SVGTarget, x0: number, y: number) {
-        assert(this.rendered);
-
-        assert(this.top <= 0);
-        y += -this.top;
-
-        const st = new Stave();
-        x0 = st.draw(ctx, x0, y);
-        let x = x0;
-
-        let pi = 1;
-
-        for (const group of this.content) {
-            const g = BeamGroupContext.tryCreate(group);
-
-            for (const c of group) {
-                x = x0 + this.positions[pi] + this.pres[pi];
-                pi++;
-
-                if (c instanceof Note) {
-                    c.draw(ctx, x, y, g);
-                } else if (c instanceof Rest) {
-                    c.draw(ctx, x, y);
-                } else if (c instanceof BarLine) {
-                    c.draw(st, ctx, x, y);
-                } else {
-                    assert(false, "unknown type", c);
-                }
-            }
-
-            if (g) g.drawBeams(ctx);
-        }
-
-        assert(this.bot >= 0);
-        return y + this.bot;
+        return beats;
     }
 }

@@ -2,24 +2,17 @@ import "./stave";
 import { ScoreTraverser } from "./scoreTraverser";
 import { TreeBuffer, Tree, TreeCursor } from "lezer-tree";
 import { SVGTarget } from "./svg";
+import { System } from "./system";
 
 export function updateScore(c: TreeCursor, s: string) {
     while (c.name != "InstrumentVoice" && c.next());
     const t = new ScoreTraverser(c, s);
 
     const voices = t.readAST();
-    let fullHeight = 0.1 // padding
-    for (const voice of Object.values(voices)) {
-        voice.render();
-        fullHeight += voice.height
-    }
-
-    const ctx = new SVGTarget(fullHeight);
-
-    let y = 0;
-    for (const voice of Object.values(voices)) {
-        y = voice.draw(ctx, 1, y);
-    }
+    const system = new System(Object.values(voices));
+    system.render();
+    const ctx = new SVGTarget(system.height);
+    system.draw(ctx);
 
     (document.getElementById("score") as any).innerHTML = ctx.finish();
 }
