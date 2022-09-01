@@ -2,12 +2,15 @@ import { Note } from "./note";
 import { Rest } from "./rest";
 import { BarLine } from "./stave";
 
-export type VoiceElement = Note | Rest | BarLine;
+export class NewGroup {}
+
+export type VoiceElement = NewGroup | Note | Rest | BarLine;
 
 export enum BeatType {
     Normal,
     Bar,
-    Empty,
+    Empty
+    
 }
 
 export interface SystemBeatSpacing {
@@ -19,7 +22,6 @@ export interface SystemBeatSpacing {
     type: BeatType;
     top: number;
     bot: number;
-    x?: number;
 }
 export function newEmptySystemBeatSpacing() {
     return {
@@ -29,7 +31,6 @@ export function newEmptySystemBeatSpacing() {
         len: 0,
         type: BeatType.Empty,
         top: 0,
-        bot: 0,
-        x: undefined,
+        bot: 0
     };
 }

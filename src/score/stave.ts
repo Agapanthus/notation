@@ -101,15 +101,23 @@ export class Stave {
     // meaning of the first line
     protected firstLineTone = 0;
 
-    // extra
+    // TODO: constants
     static clefDx = 0.1;
     static initialDx = 0.3;
 
     constructor() {}
 
-    draw(ctx: SVGTarget, x: number, y: number) {
+    
+    static defaultDefaultWidth() {
+        return (
+            (getGlyphAdvance(ClefType[ClefType.gClef]) + 2 * Stave.clefDx + Stave.initialDx) *
+            1.0
+        );
+    }
+
+    public draw(ctx: SVGTarget, x: number, y: number) {
         // TODO: dynamic width; interact with paginator
-        const w = ctx.width - x - 1;
+        const w = ctx.width - x;
 
         for (let i = 0; i < this.numberOfLines; i++) {
             ctx.drawLine(
@@ -129,9 +137,8 @@ export class Stave {
 
         return (
             x +
-            getGlyphAdvance(ClefType[this.clef]) * this.relativeSize +
-            2 * Stave.clefDx * this.relativeSize +
-            Stave.initialDx * this.relativeSize
+            (getGlyphAdvance(ClefType[this.clef]) + 2 * Stave.clefDx + Stave.initialDx) *
+                this.relativeSize
         );
     }
 }

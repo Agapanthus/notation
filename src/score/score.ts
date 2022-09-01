@@ -10,8 +10,9 @@ export function updateScore(c: TreeCursor, s: string) {
 
     const voices = t.readAST();
     const system = new System(Object.values(voices));
-    system.render();
-    const ctx = new SVGTarget(system.height);
+    const w = 10
+    system.render(w);
+    const ctx = new SVGTarget(system.height, w);
     system.draw(ctx);
 
     (document.getElementById("score") as any).innerHTML = ctx.finish();

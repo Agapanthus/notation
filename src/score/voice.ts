@@ -1,11 +1,16 @@
 import { accidentalEffects } from "./accidental";
-import { BeatType, newEmptySystemBeatSpacing, SystemBeatSpacing, VoiceElement } from "./beat";
+import {
+    BeatType,
+    newEmptySystemBeatSpacing,
+    NewGroup,
+    SystemBeatSpacing,
+    VoiceElement,
+} from "./beat";
 import { BeamGroupContext, Note, symbolicNoteDurations } from "./note";
 import { Rest, restDurations } from "./rest";
 import { ScoreTraverser } from "./scoreTraverser";
-import { BarLine, barLine2enum, BarLineType, Stave } from "./stave";
-import { SVGTarget } from "./svg";
-import { assert, MusicFraction, sum } from "./util";
+import { BarLine, barLine2enum } from "./stave";
+import { assert } from "./util";
 
 const inOctavePitch = {
     c: 0,
@@ -33,9 +38,8 @@ export class Voice {
     private duration: number = 4;
     private durationD: number = 0;
     private octave: number = 5;
-    private newGroup = false;
 
-    public content: Array<Array<VoiceElement>> = [];
+    public content: Array<VoiceElement> = [new NewGroup()];
 
     constructor(private name: string) {}
 
@@ -69,14 +73,6 @@ export class Voice {
         this.duration = symbolicNoteDurations[n];
         t.continue();
         this.parseDotsDuration(t);
-    }
-
-    private appendContent(content) {
-        if (this.content.length == 0 || this.newGroup) {
-            this.content.push([]);
-        }
-
-        this.content[this.content.length - 1].push(content);
     }
 
     private parseNote(t: ScoreTraverser) {
@@ -118,7 +114,7 @@ export class Voice {
         // TODO: also make sure there is no group afterwards
         //if (this.duration <= 4) this.newGroup = true;
 
-        this.appendContent(
+        this.content.push(
             new Note({
                 duration: this.duration,
                 dots: this.durationD,
@@ -127,8 +123,6 @@ export class Voice {
                 accs: accs,
             })
         );
-
-        this.newGroup = false;
     }
 
     private parseRest(t: ScoreTraverser) {
@@ -142,7 +136,7 @@ export class Voice {
             t.continue();
         }
 
-        this.appendContent(new Rest({ type: "rest", duration: duration, dots: durationD }));
+        this.content.push(new Rest({ type: "rest", duration: duration, dots: durationD }));
     }
 
     public eatFromAST(t: ScoreTraverser): boolean {
@@ -151,7 +145,7 @@ export class Voice {
                 let barLine = t.cs();
                 t.continue();
                 // TODO: different types
-                this.appendContent(new BarLine(barLine2enum[barLine]));
+                this.content.push(new BarLine(barLine2enum[barLine]));
                 return true;
 
             case "Duration":
@@ -172,13 +166,13 @@ export class Voice {
                 return true;
 
             case "Group":
-                this.newGroup = true;
+                this.content.push(new NewGroup());
                 assert(t.continue());
                 return true;
 
             case "Rest":
                 t.continue();
-                this.appendContent(
+                this.content.push(
                     new Rest({ type: "rest", duration: this.duration, dots: this.durationD })
                 );
                 return true;
@@ -199,40 +193,43 @@ export class Voice {
         // TODO:
         // get the width and time-length of every element and map the objects to beats, so you can synchronize multiple voices
 
-        // TODO: adjust top and bottom based on stave! (otherwise, things can overlap if notes are only in the upper part etc...)
+        // TODO: adjust top and bottom based on stave itself! (otherwise, things can overlap if notes are only in the upper part etc...)
 
-        const beats: SystemBeatSpacing[] = [newEmptySystemBeatSpacing()];
+        const beats: SystemBeatSpacing[] = [];
 
-        for (const group of this.content) {
-            const hasG = BeamGroupContext.shouldCreate(group);
-            for (const c of group) {
-                // previous beat
-                const p = beats[beats.length - 1];
+        let hasG = false;
+        for (let i = 0; i < this.content.length; i++) {
+            const c = this.content[i];
 
-                if (c instanceof Note || c instanceof Rest) {
-                    const m = c.measure(hasG);
-                    beats.push({
-                        width: m.min,
-                        ideal: m.ideal,
-                        pre: m.pre,
-                        len: c.beats().num, //c.beats().add(p.beat).simplify(),
-                        type: BeatType.Normal,
-                        top: m.top,
-                        bot: m.bot,
-                    });
-                } else if (c instanceof BarLine) {
-                    beats.push({
-                        width: c.width(),
-                        ideal: c.ideal(),
-                        pre: 0,
-                        len: 0,
-                        type: BeatType.Bar,
-                        top: 0,
-                        bot: 0,
-                    });
-                } else {
-                    assert(false, "unknown type", c);
-                }
+            // previous beat
+            // const p = beats[beats.length - 1];
+
+            if (c instanceof Note || c instanceof Rest) {
+                const m = c.measure(hasG);
+                beats.push({
+                    width: m.min,
+                    ideal: m.ideal,
+                    pre: m.pre,
+                    len: c.beats().num, //c.beats().add(p.beat).simplify(),
+                    type: BeatType.Normal,
+                    top: m.top,
+                    bot: m.bot,
+                });
+            } else if (c instanceof BarLine) {
+                beats.push({
+                    width: c.width(),
+                    ideal: c.ideal(),
+                    pre: 0,
+                    len: 0,
+                    type: BeatType.Bar,
+                    top: 0,
+                    bot: 0,
+                });
+            } else if (c instanceof NewGroup) {
+                beats.push(newEmptySystemBeatSpacing());
+                hasG = BeamGroupContext.shouldCreate(this.content, i + 1);
+            } else {
+                assert(false, "unknown type", c);
             }
         }
 

@@ -2,11 +2,11 @@ import { htmlEntities } from "./util";
 
 export class SVGTarget {
     private str = "";
-    public width: number = 1200;
-    public height: number = 300;
 
-    constructor(fullHeight: number, private s: number = 50) {
-        this.str = `<svg width="${this.width}" height="${this.s * fullHeight}">`;
+    constructor(public height: number, public width: number, private s: number = 50) {
+        // To see whether there is stuff beyond the borders
+        const extra = 100
+        this.str = `<svg width="${this.s * this.width + extra}" height="${this.s * height}">`;
     }
 
     finish() {

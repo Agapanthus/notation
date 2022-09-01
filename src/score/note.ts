@@ -1,4 +1,5 @@
 import { accidentalNames, accsPadding } from "./accidental";
+import { NewGroup, VoiceElement } from "./beat";
 import {
     FlexDimension,
     getEngravingDefaults,
@@ -8,10 +9,10 @@ import {
     lineThicknessMul,
     spatium2points,
 } from "./fonts";
+import { MusicFraction } from "./musicFraction";
 import { fraction2name } from "./rest";
 import { SVGTarget } from "./svg";
-import { assert, average, linearRegression, MusicFraction } from "./util";
-import { VoiceElement } from "./voice";
+import { assert, average, linearRegression } from "./util";
 
 // TODO: arbitrary constant
 const shortBeamLength = 0.2;
@@ -261,12 +262,18 @@ export class BeamGroupContext {
 
     constructor() {}
 
-    static shouldCreate(group: VoiceElement[]): boolean {
-        return group.filter((x) => x instanceof Note && x.hasBeams).length >= 2;
+    static shouldCreate(group: VoiceElement[], i: number): boolean {
+        let found = 0;
+        for (; i < group.length; i++) {
+            const c = group[i];
+            if (c instanceof NewGroup) break;
+            if (c instanceof Note && c.hasBeams) found++;
+        }
+        return found >= 2;
     }
 
-    static tryCreate(group: VoiceElement[]) {
-        if (BeamGroupContext.shouldCreate(group)) return new BeamGroupContext();
+    static tryCreate(group: VoiceElement[], i: number) {
+        if (BeamGroupContext.shouldCreate(group, i)) return new BeamGroupContext();
         else return null;
     }
 }
