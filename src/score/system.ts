@@ -85,7 +85,7 @@ export class System {
 
     public draw(ctx: SVGTarget) {
         assert(this.rendered, "system must be rendered");
-        let y = 0;
+        let y = .5; // TODO: 0, put margin in page layouter
         for (const row of Object.values(this.rows)) {
             y = row.draw(ctx, 0, y) + interStaveSpace;
         }
@@ -93,6 +93,6 @@ export class System {
 
     get height() {
         assert(this.rendered, "system must be rendered");
-        return this.fullHeight;
+        return this.fullHeight + .5; // TODO: + 0
     }
 }

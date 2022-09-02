@@ -3,27 +3,27 @@ import * as terms from "./notation.terms.js";
 
 // UNICODE CODEPOINTS
 
-const CHAR_DOT = ".".codePointAt(0);
-const CHAR_BACKSLASH = "\\".codePointAt(0);
-const CHAR_BACKQUOTE = "`".codePointAt(0);
-const CHAR_DOLLAR = "$".codePointAt(0);
-const CHAR_HASH = "#".codePointAt(0);
-const CHAR_EQUAL = "=".codePointAt(0);
-const CHAR_LPAREN = "(".codePointAt(0);
-const CHAR_LBRACE = "{".codePointAt(0);
-const CHAR_LBRACKET = "[".codePointAt(0);
-const CHAR_SEMICOLON = ";".codePointAt(0);
-const CHAR_COLON = ":".codePointAt(0);
-const CHAR_DQUOTE = '"'.codePointAt(0);
-const CHAR_NEWLINE = "\n".codePointAt(0);
-const CHAR_A = "A".codePointAt(0);
-const CHAR_Z = "Z".codePointAt(0);
-const CHAR_a = "a".codePointAt(0);
-const CHAR_z = "z".codePointAt(0);
-const CHAR_0 = "0".codePointAt(0);
-const CHAR_9 = "9".codePointAt(0);
-const CHAR_UNDERSCORE = "_".codePointAt(0);
-const CHAR_EXCLAMATION = "!".codePointAt(0);
+const CHAR_DOT = ".".codePointAt(0) || 0;
+const CHAR_BACKSLASH = "\\".codePointAt(0) || 0;
+const CHAR_BACKQUOTE = "`".codePointAt(0) || 0;
+const CHAR_DOLLAR = "$".codePointAt(0) || 0;
+const CHAR_HASH = "#".codePointAt(0) || 0;
+const CHAR_EQUAL = "=".codePointAt(0) || 0;
+const CHAR_LPAREN = "(".codePointAt(0) || 0;
+const CHAR_LBRACE = "{".codePointAt(0) || 0;
+const CHAR_LBRACKET = "[".codePointAt(0) || 0;
+const CHAR_SEMICOLON = ";".codePointAt(0) || 0;
+const CHAR_COLON = ":".codePointAt(0) || 0;
+const CHAR_DQUOTE = '"'.codePointAt(0) || 0;
+const CHAR_NEWLINE = "\n".codePointAt(0) || 0;
+const CHAR_A = "A".codePointAt(0) || 0;
+const CHAR_Z = "Z".codePointAt(0) || 0;
+const CHAR_a = "a".codePointAt(0) || 0;
+const CHAR_z = "z".codePointAt(0) || 0;
+const CHAR_0 = "0".codePointAt(0) || 0;
+const CHAR_9 = "9".codePointAt(0) || 0;
+const CHAR_UNDERSCORE = "_".codePointAt(0) || 0;
+const CHAR_EXCLAMATION = "!".codePointAt(0) || 0;
 
 // UNICODE CATEGORIES TESTS
 
@@ -263,18 +263,23 @@ const isBackquote = (input, offset) => {
     return input.peek(offset) === CHAR_BACKQUOTE;
 };
 
+// TODO
+/*
 export const tripleStringContent = makeStringContent({
     term: terms.tripleStringContent,
     till: isTripleQuote,
-});
+});*/
 export const stringContent = makeStringContent({
     term: terms.stringContent,
     till: isQuote,
 });
+
+// TODO
+/*
 export const commandStringContent = makeStringContent({
     term: terms.commandStringContent,
     till: isBackquote,
-});
+});*/
 
 // BLOCK COMMENT
 

@@ -8,6 +8,8 @@ module.exports = (env) => {
     const RELEASE = !(env && env.debug); // Development only! Use Release for Release!
     const RELEASE_SOURCE_MAPS = false; // false or "source-map" (extremely slow)
 
+    console.log("release", RELEASE)
+
     const MomentLocalesPlugin = require("moment-locales-webpack-plugin");
     const { VueLoaderPlugin } = require("vue-loader");
 
@@ -56,8 +58,8 @@ module.exports = (env) => {
         output: {
             filename: "app.js",
             chunkFilename: "[name].[chunkhash].bundle.js",
-            path: path.resolve(__dirname, "./public/js"),
-            publicPath: "/js/",
+            path: path.resolve(__dirname, "./public/res/notation/js"),
+            publicPath: "./public/",
         },
         resolve: {
             extensions: [
