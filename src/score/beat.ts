@@ -46,12 +46,12 @@ export class SpacedBeat {
 
     public top: number = 0;
     public bot: number = 0;
-    protected width: number = 0;
+    public width: number = 0;
 
-    protected aff: number = -1;
+    public aff: number = -1;
     public pre: number = -1;
-    protected after: number = -1;
-    protected before: number = -1;
+    public after: number = -1;
+    public before: number = -1;
 
     public type: BeatType;
 

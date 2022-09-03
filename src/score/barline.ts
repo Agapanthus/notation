@@ -48,23 +48,19 @@ export class BarLine extends Drawable {
 
     public measure(context): void {
         this.width = this.getWidth();
-        this.before = defaultBarlineSpacing / 2;
-        this.after = defaultBarlineSpacing / 2;
+        this.before = 0;
+        this.after = defaultBarlineSpacing;
     }
 
     static thin = getEngravingDefaults().thinBarlineThickness * lineThicknessMul;
     static thick = getEngravingDefaults().thickBarlineThickness * lineThicknessMul * 1.5; // 1.5 because i like it
     static sep = getEngravingDefaults().barlineSeparation * spatium2points;
 
-    static removeIdealOnehand() {
-        return defaultBarlineSpacing + BarLine.sep;
-    }
-
     private getWidth(): number {
         if (this.barline == BarLineType.Single) {
-            return BarLine.thick + BarLine.sep;
+            return BarLine.thin;
         } else if (this.barline == BarLineType.Final) {
-            return BarLine.sep + BarLine.thin + BarLine.sep + BarLine.thick + BarLine.sep;
+            return BarLine.thin + BarLine.sep + BarLine.thick;
         } else {
             assert(false, "unknown barline", this.barline);
             return 0;
@@ -72,8 +68,6 @@ export class BarLine extends Drawable {
     }
 
     public draw(ctx: SVGTarget, x: number, y: number, context) {
-        x += BarLine.sep;
-
         if (this.barline == BarLineType.Single) {
             ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, BarLine.thin);
         } else if (this.barline == BarLineType.Final) {

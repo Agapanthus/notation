@@ -45,7 +45,7 @@ export class SystemRow {
 
             // TODO: this should be done in a smarter way using smart spacing...
             if (this.content[this.content.length - 1].type == BeatType.Bar)
-                x -= BarLine.removeIdealOnehand();
+                x -= this.content[this.content.length - 1].after;
 
             if (x > w) correction -= Math.pow(2, -i);
             else if (x < w) correction += Math.pow(2, -i);
