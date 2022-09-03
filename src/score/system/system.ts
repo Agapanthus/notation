@@ -52,11 +52,7 @@ export class System {
         for (const voice of Object.values(this.voices)) {
             const ctx = new MusicContext();
 
-            // TODO: render how much you can fit in a row and break accordingly
             // TODO: Synchronize beats / bars between voices and build systems
-
-            // TODO: render first stave width in a smarter way than that..
-            // best way would probably be to get rid of defaultDefaultWidth etc and append the stave symbols to the content and then render it using the default loop
 
             let prepend: Drawable[] = Stave.generateInitialHead(voice.content);
             let x = System.quickRender(prepend);
