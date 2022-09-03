@@ -7,6 +7,7 @@ import { Drawable } from "../objects/drawable";
 import { Space } from "../objects/space";
 import { TimeSignature } from "../objects/timeSignature";
 import { MusicFraction } from "../util/musicFraction";
+import { BarLine, BarLineType } from "../objects/barline";
 
 export class Stave {
     protected numberOfLines: number = 5;
@@ -35,7 +36,7 @@ export class Stave {
 
     static generateInitialHead(content: Drawable[]) {
         return [
-            new Space(0.1),
+            new BarLine(BarLineType.Single),
             new Clef(ClefType.gClef),
             new TimeSignature(new MusicFraction(7, 4)),
             new Space(0.3),

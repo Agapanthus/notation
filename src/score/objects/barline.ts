@@ -39,7 +39,7 @@ export const barLine2enum = {
 };
 
 // TODO: arbitrary constant
-const defaultBarlineSpacing = 0.2;
+const defaultBarlineSpacing = 0.1;
 
 export class BarLine extends Drawable {
     constructor(private barline: BarLineType) {
