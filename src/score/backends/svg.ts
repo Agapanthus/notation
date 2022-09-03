@@ -1,4 +1,4 @@
-import { htmlEntities } from "./util";
+import { htmlEntities } from "../util/util";
 
 export class SVGTarget {
     private str = "";

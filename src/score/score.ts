@@ -1,8 +1,8 @@
-import "./stave";
-import { ScoreTraverser } from "./scoreTraverser";
+import "./system/stave";
+import { ScoreTraverser } from "./parser/scoreTraverser";
 import { TreeBuffer, Tree, TreeCursor } from "lezer-tree";
-import { SVGTarget } from "./svg";
-import { System } from "./system";
+import { SVGTarget } from "./backends/svg";
+import { System } from "./system/system";
 
 export function updateScore(c: TreeCursor, s: string) {
     while (c.name != "InstrumentVoice" && c.next());
@@ -10,10 +10,12 @@ export function updateScore(c: TreeCursor, s: string) {
 
     const voices = t.readAST();
     const system = new System(Object.values(voices));
-    const w = 10
+    const w = 10;
     system.render(w);
-    const ctx = new SVGTarget(system.height, w);
-    system.draw(ctx);
+    const can = new SVGTarget(system.height, w);
+    // TODO: should be 0; do spacing in the paginator-class
+    can.translate(0, 0.5);
+    system.draw(can);
 
-    (document.getElementById("score") as any).innerHTML = ctx.finish();
+    (document.getElementById("score") as any).innerHTML = can.finish();
 }

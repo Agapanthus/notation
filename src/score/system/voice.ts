@@ -1,11 +1,11 @@
-import { accidentalEffects } from "./accidental";
-import { BarLine, barLine2enum } from "./barline";
-import { Drawable, NewGroup } from "./drawable";
-import { MusicContext } from "./musicContext";
-import { Note, symbolicNoteDurations } from "./note";
-import { Rest, restDurations } from "./rest";
-import { ScoreTraverser } from "./scoreTraverser";
-import { assert } from "./util";
+import { accidentalEffects } from "../util/accidental";
+import { BarLine, barLine2enum } from "../objects/barline";
+import { Drawable, NewGroup } from "../objects/drawable";
+import { MusicContext } from "../context/musicContext";
+import { Note, symbolicNoteDurations } from "../objects/note";
+import { Rest, restDurations } from "../objects/rest";
+import { ScoreTraverser } from "../parser/scoreTraverser";
+import { assert } from "../util/util";
 
 const inOctavePitch = {
     c: 0,

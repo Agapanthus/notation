@@ -1,5 +1,5 @@
-import { accidentalNames, accsPadding } from "./accidental";
-import { BeatType, SpacedBeat } from "./beat";
+import { accidentalNames, accsPadding } from "../util/accidental";
+import { BeatType, SpacedBeat } from "../util/beat";
 import { Drawable, NewGroup } from "./drawable";
 import {
     getEngravingDefaults,
@@ -8,12 +8,12 @@ import {
     getSMUFLUni,
     lineThicknessMul,
     spatium2points,
-} from "./fonts";
-import { DrawingMusicContext, MusicContext } from "./musicContext";
-import { MusicFraction } from "./musicFraction";
+} from "../util/fonts";
+import { DrawingMusicContext, MusicContext } from "../context/musicContext";
+import { MusicFraction } from "../util/musicFraction";
 import { fraction2name } from "./rest";
-import { SVGTarget } from "./svg";
-import { assert, average, linearRegression } from "./util";
+import { SVGTarget } from "../backends/svg";
+import { assert, average, linearRegression } from "../util/util";
 
 // TODO: arbitrary constant
 const defaultInterNote = 0.3;

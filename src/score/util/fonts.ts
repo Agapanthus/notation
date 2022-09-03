@@ -1,8 +1,8 @@
-import _bravura, { EngravingDefaults } from "../../public/res/notation/fonts/bravura/bravura_metadata.json";
+import _bravura, { EngravingDefaults } from "../../../public/res/notation/fonts/bravura/bravura_metadata.json";
 
 export const bravura = _bravura;
 
-import glyphnames from "../../public/res/notation/fonts/metadata/glyphnames.json";
+import glyphnames from "../../../public/res/notation/fonts/metadata/glyphnames.json";
 import { assert } from "./util";
 
 export const lineThicknessMul = 0.25 * 0.5; // half, because i like it

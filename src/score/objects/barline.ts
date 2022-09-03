@@ -1,9 +1,9 @@
-import { assert } from "./util";
+import { assert } from "../util/util";
 import { Drawable } from "./drawable";
-import { BeatType } from "./beat";
-import { MusicFraction } from "./musicFraction";
-import { getEngravingDefaults, lineThicknessMul, spatium2points } from "./fonts";
-import { SVGTarget } from "./svg";
+import { BeatType } from "../util/beat";
+import { MusicFraction } from "../util/musicFraction";
+import { getEngravingDefaults, lineThicknessMul, spatium2points } from "../util/fonts";
+import { SVGTarget } from "../backends/svg";
 
 export enum BarLineType {
     // https://w3c.github.io/smufl/latest/tables/barlines.html

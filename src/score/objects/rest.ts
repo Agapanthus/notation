@@ -1,11 +1,11 @@
-import { BeatType } from "./beat";
+import { BeatType } from "../util/beat";
 import { Drawable } from "./drawable";
-import { getGlyphAdvance } from "./fonts";
-import { DrawingMusicContext, MusicContext } from "./musicContext";
-import { MusicFraction } from "./musicFraction";
+import { getGlyphAdvance } from "../util/fonts";
+import { DrawingMusicContext, MusicContext } from "../context/musicContext";
+import { MusicFraction } from "../util/musicFraction";
 import { Note } from "./note";
-import { SVGTarget } from "./svg";
-import { assert } from "./util";
+import { SVGTarget } from "../backends/svg";
+import { assert } from "../util/util";
 
 export const restDurations = {
     "𝄺": 0,

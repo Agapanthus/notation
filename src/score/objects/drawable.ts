@@ -1,7 +1,7 @@
-import { BeatType, SpacedBeat } from "./beat";
-import { DrawingMusicContext, MusicContext } from "./musicContext";
-import { MusicFraction } from "./musicFraction";
-import { SVGTarget } from "./svg";
+import { BeatType, SpacedBeat } from "../util/beat";
+import { DrawingMusicContext, MusicContext } from "../context/musicContext";
+import { MusicFraction } from "../util/musicFraction";
+import { SVGTarget } from "../backends/svg";
 
 export abstract class Drawable extends SpacedBeat {
     constructor(t: BeatType, len: MusicFraction) {

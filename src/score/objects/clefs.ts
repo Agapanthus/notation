@@ -1,9 +1,9 @@
-import { BeatType } from "./beat";
+import { BeatType } from "../util/beat";
 import { Drawable } from "./drawable";
-import { getGlyphAdvance, getGlyphWidth, getSMUFLUni, spatium2points } from "./fonts";
-import { DrawingMusicContext, MusicContext } from "./musicContext";
-import { MusicFraction } from "./musicFraction";
-import { SVGTarget } from "./svg";
+import { getGlyphAdvance, getGlyphWidth, getSMUFLUni, spatium2points } from "../util/fonts";
+import { DrawingMusicContext, MusicContext } from "../context/musicContext";
+import { MusicFraction } from "../util/musicFraction";
+import { SVGTarget } from "../backends/svg";
 
 export enum ClefType {
     gClef,

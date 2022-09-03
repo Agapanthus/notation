@@ -1,10 +1,10 @@
-import { BeatType } from "./beat";
-import { Drawable } from "./drawable";
-import { DrawingMusicContext, MusicContext } from "./musicContext";
+import { BeatType } from "../util/beat";
+import { Drawable } from "../objects/drawable";
+import { DrawingMusicContext, MusicContext } from "../context/musicContext";
 import { Stave } from "./stave";
-import { SVGTarget } from "./svg";
+import { SVGTarget } from "../backends/svg";
 import { SystemRow } from "./systemRow";
-import { assert, last } from "./util";
+import { assert, last } from "../util/util";
 import { Voice } from "./voice";
 
 // TODO: constant
@@ -110,9 +110,6 @@ export class System {
 
     public draw(can: SVGTarget) {
         assert(this.rendered, "system must be rendered");
-
-        // TODO: 0, put margin in page layouter
-        can.translate(0, 0.5);
         for (const row of Object.values(this.rows)) {
             row.draw(can);
             can.translate(0, interStaveSpace);

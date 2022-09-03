@@ -1,7 +1,7 @@
 import { BeamGroupContext } from "./beamgroup";
-import { Drawable, NewGroup } from "./drawable";
-import { SVGTarget } from "./svg";
-import { assert } from "./util";
+import { Drawable, NewGroup } from "../objects/drawable";
+import { SVGTarget } from "../backends/svg";
+import { assert } from "../util/util";
 
 export class MusicContext {
     private beamgroup: boolean = false;

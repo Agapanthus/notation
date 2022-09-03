@@ -1,8 +1,8 @@
-import { BeatType } from "./beat";
+import { BeatType } from "../util/beat";
 import { Drawable } from "./drawable";
-import { DrawingMusicContext, MusicContext } from "./musicContext";
-import { MusicFraction } from "./musicFraction";
-import { SVGTarget } from "./svg";
+import { DrawingMusicContext, MusicContext } from "../context/musicContext";
+import { MusicFraction } from "../util/musicFraction";
+import { SVGTarget } from "../backends/svg";
 
 export class Space extends Drawable {
     constructor(w: number, after: number = 0, aff: number = 0) {

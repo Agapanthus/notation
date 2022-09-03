@@ -1,7 +1,7 @@
 import { TreeBuffer, Tree, TreeCursor } from "lezer-tree";
-import { Note } from "./note";
-import { assert } from "./util";
-import { Voice } from "./voice";
+import { Note } from "../objects/note";
+import { assert } from "../util/util";
+import { Voice } from "../system/voice";
 
 export class ScoreTraverser {
     private c: TreeCursor;

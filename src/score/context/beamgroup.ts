@@ -1,9 +1,9 @@
-import { SpacedBeat } from "./beat";
-import { NewGroup } from "./drawable";
-import { getEngravingDefaults, lineThicknessMul } from "./fonts";
-import { Note } from "./note";
-import { SVGTarget } from "./svg";
-import { assert, average, linearRegression } from "./util";
+import { SpacedBeat } from "../util/beat";
+import { NewGroup } from "../objects/drawable";
+import { getEngravingDefaults, lineThicknessMul } from "../util/fonts";
+import { Note } from "../objects/note";
+import { SVGTarget } from "../backends/svg";
+import { assert, average, linearRegression } from "../util/util";
 
 // TODO: arbitrary constants
 const flagWidth = 0.25;

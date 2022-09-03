@@ -1,10 +1,10 @@
 import { sum } from "lodash";
-import { BeatType } from "./beat";
-import { Drawable } from "./drawable";
-import { DrawingMusicContext, MusicContext } from "./musicContext";
+import { BeatType } from "../util/beat";
+import { Drawable } from "../objects/drawable";
+import { DrawingMusicContext } from "../context/musicContext";
 import { Stave } from "./stave";
-import { SVGTarget } from "./svg";
-import { assert } from "./util";
+import { SVGTarget } from "../backends/svg";
+import { assert } from "../util/util";
 
 // TODO: constant
 const beatLengthExp = 0.6;

@@ -3,7 +3,7 @@ import Vue from "vue";
 import { store } from "./storage/storage";
 import App from "./components/app.vue";
 import { createEditor } from "./editor/codemirror";
-import * as Benchmark from "./score/littleBenchmark";
+import * as Benchmark from "./score/benchmarks/littleBenchmark";
 
 window.onload = () => {
     //Benchmark.sum();
