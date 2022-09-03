@@ -5,6 +5,8 @@ import { getEngravingDefaults, lineThicknessMul, spatium2points } from "../util/
 import { SVGTarget } from "../backends/svg";
 import { Drawable } from "../objects/drawable";
 import { Space } from "../objects/space";
+import { TimeSignature } from "../objects/timeSignature";
+import { MusicFraction } from "../util/musicFraction";
 
 export class Stave {
     protected numberOfLines: number = 5;
@@ -32,6 +34,11 @@ export class Stave {
     }
 
     static generateInitialHead(content: Drawable[]) {
-        return [new Space(0.1), new Clef(ClefType.gClef), new Space(0.3)];
+        return [
+            new Space(0.1),
+            new Clef(ClefType.gClef),
+            new TimeSignature(new MusicFraction(7, 4)),
+            new Space(0.3),
+        ];
     }
 }

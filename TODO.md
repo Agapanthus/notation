@@ -8,6 +8,8 @@
     -   give the allocated width to the render-function and let the glyph place itself in the space.
 
 -   connect the different simultaneous staves using bar-lines and horizontally synchronize
+-   
+-   Completely re-write the beam placement routine (it's really buggy and we can do this much easier)
 
 ### New Features
 
