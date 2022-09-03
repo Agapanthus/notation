@@ -30,4 +30,8 @@ export class SVGTarget {
             (y2 + s / 2) * this.s
         } ${x2 * this.s},${(y2 - s / 2) * this.s} ${x * this.s},${(y - s / 2) * this.s}"  />`;
     }
+
+    translate(x:number, y:number) {
+        
+    }
 }

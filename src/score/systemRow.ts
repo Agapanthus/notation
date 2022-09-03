@@ -1,9 +1,7 @@
 import { sum } from "lodash";
-import { BarLine } from "./barline";
 import { BeatType } from "./beat";
-import { Drawable, NewGroup } from "./drawable";
-import { BeamGroupContext, Note } from "./note";
-import { Rest } from "./rest";
+import { Drawable } from "./drawable";
+import { MusicContext } from "./musicContext";
 import { Stave } from "./stave";
 import { SVGTarget } from "./svg";
 import { assert } from "./util";
@@ -68,37 +66,35 @@ export class SystemRow {
         assert(this.positions.length == this.content.length);
     }
 
-    constructor(content: Array<Drawable>, w: number) {
+    private ctx: MusicContext;
+    constructor(content: Array<Drawable>, w: number, ctx: MusicContext) {
         this.content = content;
         this.pres = this.content.map((x) => x.pre);
         this.render(w);
-
+        this.ctx = MusicContext.copy(ctx);
         this.top = Math.min(...this.content.map((x) => x.top));
         this.bot = Math.max(...this.content.map((x) => x.bot));
 
         this.st = new Stave();
     }
 
-    public draw(ctx: SVGTarget, x0: number, y: number) {
+    public draw(can: SVGTarget, x0: number, y: number) {
         assert(this.top <= 0);
         y += -this.top;
 
-        x0 = this.st.draw(ctx, x0, y);
+        const ctx = this.ctx;
+        console.log(ctx.hasBeamgroup)
+
+        x0 = this.st.draw(can, x0, y);
         let x = x0;
 
-        let g: BeamGroupContext | null = null;
         for (let i = 0; i < this.content.length; i++) {
             x = x0 + this.positions[i] + this.pres[i];
             const c = this.content[i];
-
-            if (c instanceof NewGroup) {
-                if (g) g.drawBeams(ctx);
-                g = BeamGroupContext.tryCreate(this.content, i + 1);
-            }
-
-            c.draw(ctx, x, y, g);
+            ctx.update(this.content, i, can);
+            c.draw(can, x, y, ctx);
         }
-        if (g) g.drawBeams(ctx);
+        ctx.finish(can);
 
         assert(this.bot >= 0);
         return y + this.bot;

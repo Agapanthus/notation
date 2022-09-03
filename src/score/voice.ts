@@ -1,7 +1,8 @@
 import { accidentalEffects } from "./accidental";
 import { BarLine, barLine2enum } from "./barline";
 import { Drawable, NewGroup } from "./drawable";
-import { BeamGroupContext, Note, symbolicNoteDurations } from "./note";
+import { MusicContext } from "./musicContext";
+import { Note, symbolicNoteDurations } from "./note";
 import { Rest, restDurations } from "./rest";
 import { ScoreTraverser } from "./scoreTraverser";
 import { assert } from "./util";
@@ -182,21 +183,4 @@ export class Voice {
         return false;
     }
 
-    // render width and so on for every element
-    public measure() {
-        // TODO:
-        // get the width and time-length of every element and map the objects to beats, so you can synchronize multiple voices
-
-        // TODO: adjust top and bottom based on stave itself! (otherwise, things can overlap if notes are only in the upper part etc...)
-
-        let hasG = false;
-        for (let i = 0; i < this.content.length; i++) {
-            const c = this.content[i];
-
-            if (c instanceof NewGroup) {
-                hasG = BeamGroupContext.shouldCreate(this.content, i + 1);
-            }
-            c.measure(hasG);
-        }
-    }
 }

@@ -1,6 +1,6 @@
 import { BeatType, SpacedBeat } from "./beat";
+import { MusicContext } from "./musicContext";
 import { MusicFraction } from "./musicFraction";
-import { BeamGroupContext } from "./note";
 import { SVGTarget } from "./svg";
 
 export abstract class Drawable extends SpacedBeat {
@@ -8,9 +8,9 @@ export abstract class Drawable extends SpacedBeat {
         super(t, len);
     }
 
-    abstract measure(drawBeams: boolean): void;
+    abstract measure(ctx: MusicContext): void;
 
-    abstract draw(ctx: SVGTarget, x: number, y: number, g: BeamGroupContext | null): void;
+    abstract draw(can: SVGTarget, x: number, y: number, ctx: MusicContext): void;
 }
 
 export class NewGroup extends Drawable {
@@ -18,11 +18,9 @@ export class NewGroup extends Drawable {
         super(BeatType.Empty, new MusicFraction());
     }
 
-    public draw(ctx: SVGTarget, x: number, y: number, g: BeamGroupContext | null) {
+    public draw(can: SVGTarget, x: number, y: number, ctx: MusicContext) {
         // TODO
     }
 
-    public measure() {
-    }
+    public measure(ctx: MusicContext) {}
 }
-

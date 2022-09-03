@@ -39,7 +39,7 @@ export const barLine2enum = {
 };
 
 // TODO: arbitrary constant
-const defaultBarlineSpacing = 0.4;
+const defaultBarlineSpacing = 0.2;
 
 export class BarLine extends Drawable {
     constructor(private barline: BarLineType) {
@@ -67,18 +67,24 @@ export class BarLine extends Drawable {
         }
     }
 
+    private p1(): number {
+        return 0 * 0.125;
+    }
+    private p2(): number {
+        return 8 * 0.125;
+    }
+
     public draw(ctx: SVGTarget, x: number, y: number, context) {
         if (this.barline == BarLineType.Single) {
-            ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, BarLine.thin);
+            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thin);
         } else if (this.barline == BarLineType.Final) {
-            ctx.drawLine(x, y + 0 * 0.125, x, y + 8 * 0.125, BarLine.thin);
-            ctx.drawLine(
-                x + BarLine.sep,
-                y + 0 * 0.125,
-                x + BarLine.sep,
-                y + 8 * 0.125,
-                BarLine.thick
-            );
+            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thin);
+            x += BarLine.sep + BarLine.thin;
+            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thick);
+        } else if (this.barline == BarLineType.Double) {
+            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thin);
+            x += BarLine.sep + BarLine.thin;
+            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thin);
         } else {
             assert(false, "unknown barline", this.barline);
         }

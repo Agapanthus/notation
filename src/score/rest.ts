@@ -1,8 +1,9 @@
 import { BeatType } from "./beat";
 import { Drawable } from "./drawable";
 import { getGlyphAdvance } from "./fonts";
+import { MusicContext } from "./musicContext";
 import { MusicFraction } from "./musicFraction";
-import { BeamGroupContext, Note } from "./note";
+import { Note } from "./note";
 import { SVGTarget } from "./svg";
 import { assert } from "./util";
 
@@ -63,20 +64,20 @@ export class Rest extends Drawable {
         return "rest" + fraction2name[this.duration + ""];
     }
 
-    public measure(drawBeams: boolean): void {
+    public measure(ctx: MusicContext): void {
         this.spaceAddGlyph(this.restName, defaultRestPos);
         Note.measureDots(this, this.dots);
         this.after = defaultRestSpacing;
     }
 
-    public draw(ctx: SVGTarget, x: number, y: number, g: BeamGroupContext | null) {
+    public draw(can: SVGTarget, x: number, y: number, ctx: MusicContext) {
         let uniPoint = parseInt("E4E2", 16);
 
         if (this.duration > 0) uniPoint += 1 + Math.log2(this.duration);
         const w = getGlyphAdvance(this.restName);
 
-        ctx.drawText(x, y + defaultRestPos, String.fromCodePoint(uniPoint));
+        can.drawText(x, y + defaultRestPos, String.fromCodePoint(uniPoint));
 
-        Note.drawDots(ctx, x, y, w, 5, this.dots);
+        Note.drawDots(can, x, y, w, 5, this.dots);
     }
 }
