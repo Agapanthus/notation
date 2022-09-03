@@ -81,10 +81,10 @@ export class SystemRow {
         assert(this.top <= 0);
 
         can.translate(0, -this.top);
-        const x0 = this.st.draw(can);
+        this.st.draw(can);
 
         for (let i = 0; i < this.content.length; i++) {
-            const x = x0 + this.positions[i] + this.pres[i];
+            const x = this.positions[i] + this.pres[i];
 
             can.push();
             can.translate(x, 0);
@@ -104,5 +104,10 @@ export class SystemRow {
 
     public get height() {
         return this.bot - this.top;
+    }
+
+    public generateNextHead() {
+        // TODO:
+        return Stave.generateInitialHead([]);
     }
 }

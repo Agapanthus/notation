@@ -1,4 +1,9 @@
-import { getSMUFLUni } from "./fonts";
+import { BeatType } from "./beat";
+import { Drawable } from "./drawable";
+import { getGlyphAdvance, getGlyphWidth, getSMUFLUni, spatium2points } from "./fonts";
+import { DrawingMusicContext, MusicContext } from "./musicContext";
+import { MusicFraction } from "./musicFraction";
+import { SVGTarget } from "./svg";
 
 export enum ClefType {
     gClef,
@@ -55,5 +60,22 @@ export function clefType2Line(t: ClefType) {
             // TODO: more
             console.warn("unknown clef");
             return 3;
+    }
+}
+
+export class Clef extends Drawable {
+    static dx = 0.1;
+    constructor(protected clef: ClefType, protected clefLine: number = 0) {
+        super(BeatType.Note, new MusicFraction());
+    }
+
+    public render(ctx: MusicContext) {
+        this.width = getGlyphAdvance(ClefType[this.clef]);
+        this.after = Clef.dx;
+        //getGlyphAdvance(ClefType[this.clef]);
+    }
+
+    public draw(can: SVGTarget, ctx: DrawingMusicContext) {
+        can.drawText(0, spatium2points * clefType2Line(this.clef), clefType2unicode(this.clef));
     }
 }

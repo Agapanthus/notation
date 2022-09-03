@@ -103,3 +103,7 @@ export function gcd(x: number, y: number): number {
 export function defined(x: any): boolean {
     return typeof x !== "undefined";
 }
+
+export function last<T>(x: T[]): T {
+    return x[x.length - 1];
+}

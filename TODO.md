@@ -4,13 +4,9 @@
 
 -   add "space affinity rules", i.e., how much a symbol wants extraspace.
 
-    -   We have to care about front / behind to synchronize at beats.
-    -   group-borders should be zero-width with some extra space affinity (so you also see grouping when using quarters)
+    -   actually use the new spacing variables to calculate the spacing (stop using "Ideal")
     -   give the allocated width to the render-function and let the glyph place itself in the space.
-    -   maybe unify content and beats? We can just put the rendered props into the main object.
 
--   place stave-header glyphs in the content section to render them the same way we render the rest
-    -   also add a stave-spacer in the beginning which is a phantom box that draws the whole stave
 -   connect the different simultaneous staves using bar-lines and horizontally synchronize
 
 ### New Features

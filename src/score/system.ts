@@ -1,9 +1,10 @@
-import { BeatType, SystemBeatSpacing } from "./beat";
+import { BeatType } from "./beat";
+import { Drawable } from "./drawable";
 import { DrawingMusicContext, MusicContext } from "./musicContext";
 import { Stave } from "./stave";
 import { SVGTarget } from "./svg";
 import { SystemRow } from "./systemRow";
-import { assert } from "./util";
+import { assert, last } from "./util";
 import { Voice } from "./voice";
 
 // TODO: constant
@@ -17,6 +18,7 @@ export class System {
 
     private appendRow(
         voice: Voice,
+        prepend: Drawable[],
         from: number,
         to: number,
         maxW: number,
@@ -24,15 +26,26 @@ export class System {
     ) {
         if (from == to) return;
         assert(from < to);
-        this.rows.push(new SystemRow(voice.content.slice(from, to), maxW, ctx));
-        this.fullHeight += this.rows[this.rows.length - 1].height + interStaveSpace;
+        this.rows.push(new SystemRow(prepend.concat(voice.content.slice(from, to)), maxW, ctx));
+        this.fullHeight += last(this.rows).height + interStaveSpace;
+    }
+
+    static quickRender(arr: Drawable[]) {
+        const ctx = new MusicContext();
+        let x = 0;
+        let i = -1;
+        while (++i < arr.length) {
+            const b = arr[i];
+            ctx.update(arr, i);
+            b.render(ctx);
+
+            x += b.ideal;
+        }
+        return x;
     }
 
     public render(maxWidth: number) {
         this.fullHeight = 0.1; // padding
-
-        // TODO: this should be calculated in a smarter way; i.e., using different types of growable margins for notes
-        const maxW = maxWidth - Stave.defaultDefaultWidth();
 
         assert(this.rows.length == 0, "render must be called at most once");
 
@@ -44,7 +57,9 @@ export class System {
 
             // TODO: render first stave width in a smarter way than that..
             // best way would probably be to get rid of defaultDefaultWidth etc and append the stave symbols to the content and then render it using the default loop
-            let x = Stave.defaultDefaultWidth();
+
+            let prepend: Drawable[] = Stave.generateInitialHead(voice.content);
+            let x = System.quickRender(prepend);
             let lastI = 0;
 
             let lastBreakableX = 0;
@@ -52,7 +67,8 @@ export class System {
             let lastCtx = ctx.createDrawingCtx();
             //let lastEmergencyBreakableI = 0;
 
-            for (let i = 0; i < voice.content.length; i++) {
+            let i = -1;
+            while (++i < voice.content.length) {
                 const b = voice.content[i];
                 ctx.update(voice.content, i);
                 b.render(ctx);
@@ -66,10 +82,12 @@ export class System {
                     } else {
                         console.log("break", i, x);
                         assert(lastI < lastBreakableI);
-                        this.appendRow(voice, lastI, lastBreakableI, maxW, lastCtx);
+                        this.appendRow(voice, prepend, lastI, lastBreakableI, maxWidth, lastCtx);
                         lastI = lastBreakableI;
                         x -= lastBreakableX;
-                        x += Stave.defaultDefaultWidth();
+                        prepend = last(this.rows).generateNextHead();
+                        x += System.quickRender(prepend);
+                        //x += Stave.defaultDefaultWidth();
                         lastCtx = ctx.createDrawingCtx();
                     }
                 }
@@ -84,7 +102,7 @@ export class System {
 
             ctx.finish();
 
-            this.appendRow(voice, lastI, voice.content.length, maxW, lastCtx);
+            this.appendRow(voice, prepend, lastI, voice.content.length, maxWidth, lastCtx);
         }
 
         this.rendered = true;
