@@ -3,7 +3,7 @@ import { MusicContext } from "./musicContext";
 import { Stave } from "./stave";
 import { SVGTarget } from "./svg";
 import { SystemRow } from "./systemRow";
-import { assert, sum } from "./util";
+import { assert } from "./util";
 import { Voice } from "./voice";
 
 // TODO: constant
@@ -43,6 +43,7 @@ export class System {
 
             let lastBreakableX = 0;
             let lastBreakableI = 0;
+            let lastCtx = MusicContext.copy(ctx)
             //let lastEmergencyBreakableI = 0;
 
             for (let i = 0; i < voice.content.length; i++) {
@@ -59,10 +60,9 @@ export class System {
                     } else {
                         console.log("break", i, x);
                         assert(lastI < lastBreakableI);
-                        this.appendRow(voice, lastI, lastBreakableI, maxW, ctx);
+                        this.appendRow(voice, lastI, lastBreakableI, maxW, lastCtx);
                         lastI = lastBreakableI;
                         x -= lastBreakableX;
-
                         x += Stave.defaultDefaultWidth();
                     }
                 }
@@ -72,6 +72,7 @@ export class System {
 
                     lastBreakableI = i + 1;
                     lastBreakableX = x;
+                    lastCtx = MusicContext.copy(ctx)
                 }
             }
 

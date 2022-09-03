@@ -7,7 +7,6 @@ import { SVGTarget } from "./svg";
 import { assert } from "./util";
 
 // TODO: constant
-const spacingBeatAffinityReferenceSize = 1.0;
 const beatLengthExp = 0.6;
 
 export class SystemRow {
@@ -71,7 +70,7 @@ export class SystemRow {
         this.content = content;
         this.pres = this.content.map((x) => x.pre);
         this.render(w);
-        this.ctx = MusicContext.copy(ctx);
+        this.ctx = ctx;
         this.top = Math.min(...this.content.map((x) => x.top));
         this.bot = Math.max(...this.content.map((x) => x.bot));
 
@@ -82,9 +81,6 @@ export class SystemRow {
         assert(this.top <= 0);
 
         can.translate(0, -this.top);
-
-        const ctx = this.ctx;
-
         const x0 = this.st.draw(can);
 
         for (let i = 0; i < this.content.length; i++) {
@@ -94,12 +90,12 @@ export class SystemRow {
             can.translate(x, 0);
 
             const c = this.content[i];
-            ctx.update(this.content, i, can);
-            c.draw(can, ctx);
+            this.ctx.update(this.content, i, can);
+            c.draw(can, this.ctx);
 
             can.pop();
         }
-        ctx.finish(can);
+        this.ctx.finish(can);
 
         assert(this.bot >= 0);
 

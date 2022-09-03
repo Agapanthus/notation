@@ -16,25 +16,32 @@ export class SVGTarget {
     }
 
     drawLine(x: number, y: number, x2: number, y2: number, stroke: number = 1) {
-        this.str += `<line x1="${(x + this.dx) * this.s}" y1="${(y + this.dy) * this.s}" x2="${
-            (x2 + this.dx) * this.s
-        }" y2="${(y2 + this.dy) * this.s}" style="stroke:rgb(0,0,0);stroke-width:${
+        x = (x + this.dx) * this.s;
+        y = (y + this.dy) * this.s;
+        x2 = (x2 + this.dx) * this.s;
+        y2 = (y2 + this.dy) * this.s;
+        this.str += `<line x1="${x}" y1="${y}" x2="${x2}" y2="${y2}" style="stroke:rgb(0,0,0);stroke-width:${
             this.s * stroke
         }" />`;
     }
 
     drawText(x: number, y: number, s: string) {
-        this.str += `<text x="${(x + this.dx) * this.s}" y="${(y + this.dy) * this.s}" font-size="${
-            this.s
-        }px">${htmlEntities(s)}</text>`;
+        x = (x + this.dx) * this.s;
+        y = (y + this.dy) * this.s;
+        this.str += `<text x="${x}" y="${y}" font-size="${this.s}px">${htmlEntities(s)}</text>`;
     }
 
-    drawFatLine(x: number, y: number, x2: number, y2: number, s: number = 1) {
-        this.str += `<polygon points="${(x + this.dx) * this.s},${(y + this.dy + s / 2) * this.s} ${
-            (x2 + this.dx) * this.s
-        },${(y2 + this.dy + s / 2) * this.s} ${(x2 + this.dx) * this.s},${
-            (y2 + this.dy - s / 2) * this.s
-        } ${(x + this.dx) * this.s},${(y + this.dy - s / 2) * this.s}"  />`;
+    drawFatLine(x1: number, y1: number, x2: number, y2: number, s: number = 1) {
+        x1 = (x1 + this.dx) * this.s;
+        y1 = (y1 + this.dy) * this.s;
+        s = (s / 2) * this.s;
+        x2 = (x2 + this.dx) * this.s;
+        y2 = (y2 + this.dy) * this.s;
+        this.str += `<polygon points="
+            ${x1},${y1 + s} 
+            ${x2},${y2 + s} 
+            ${x2},${y2 - s} 
+            ${x1},${y1 - s}"  />`;
     }
 
     public get getDx(): number {
