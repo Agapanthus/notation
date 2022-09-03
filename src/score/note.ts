@@ -9,7 +9,7 @@ import {
     lineThicknessMul,
     spatium2points,
 } from "./fonts";
-import { MusicContext } from "./musicContext";
+import { DrawingMusicContext, MusicContext } from "./musicContext";
 import { MusicFraction } from "./musicFraction";
 import { fraction2name } from "./rest";
 import { SVGTarget } from "./svg";
@@ -86,14 +86,14 @@ export class Note extends Drawable {
         return MusicFraction.fromDots(this.duration, this.dots);
     }
 
-    private measured = false;
-    public measure(ctx: MusicContext): void {
-        assert(!this.measured, "can only measure once");
-        this.measured = true;
+    private renderd = false;
+    public render(ctx: MusicContext): void {
+        assert(!this.renderd, "can only render once");
+        this.renderd = true;
 
-        this.measureAccidentals();
-        this.measureHeadAndFlags(ctx.hasBeamgroup);
-        Note.measureDots(this, this.dots);
+        this.renderAccidentals();
+        this.renderHeadAndFlags(ctx.hasBeamgroup);
+        Note.renderDots(this, this.dots);
 
         this.before = 0;
         this.after = defaultInterNote;
@@ -154,7 +154,7 @@ export class Note extends Drawable {
         }
     }
 
-    private measureAccidentals() {
+    private renderAccidentals() {
         const l = this.getL();
         if (this.accidentals.length > 0) {
             this.spaceAddPreGlyph(accidentalNames[this.accidentals[0]], 0.125 * l);
@@ -172,7 +172,7 @@ export class Note extends Drawable {
         }
     }
 
-    static measureDots(self: SpacedBeat, dots: number) {
+    static renderDots(self: SpacedBeat, dots: number) {
         if (dots > 0) {
             const dDot = getGlyphWidth("augmentationDot") * dDotMul;
             self.spaceAdd(dots * dDot + dotAfterNote);
@@ -195,7 +195,7 @@ export class Note extends Drawable {
         return x;
     }
 
-    private measureHeadAndFlags(drawBeams: boolean) {
+    private renderHeadAndFlags(drawBeams: boolean) {
         const l = this.getL();
         const upwards = Note.getStemDirection(l) < 0;
         const notehead = Note.getNotehead(this.duration);
@@ -303,7 +303,7 @@ export class Note extends Drawable {
         return l;
     }
 
-    public draw(can: SVGTarget, ctx: MusicContext) {
+    public draw(can: SVGTarget, ctx: DrawingMusicContext) {
         const l = this.getL();
         // determine y positions
         const yl = 0.125 * l;

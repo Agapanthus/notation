@@ -46,7 +46,7 @@ export class BarLine extends Drawable {
         super(BeatType.Bar, new MusicFraction());
     }
 
-    public measure(context): void {
+    public render(context): void {
         this.width = this.getWidth();
         this.before = 0;
         this.after = defaultBarlineSpacing;

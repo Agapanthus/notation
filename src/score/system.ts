@@ -1,5 +1,5 @@
 import { BeatType, SystemBeatSpacing } from "./beat";
-import { MusicContext } from "./musicContext";
+import { DrawingMusicContext, MusicContext } from "./musicContext";
 import { Stave } from "./stave";
 import { SVGTarget } from "./svg";
 import { SystemRow } from "./systemRow";
@@ -15,7 +15,13 @@ export class System {
     constructor(private voices: Voice[]) {}
     private rendered = false;
 
-    private appendRow(voice: Voice, from: number, to: number, maxW: number, ctx: MusicContext) {
+    private appendRow(
+        voice: Voice,
+        from: number,
+        to: number,
+        maxW: number,
+        ctx: DrawingMusicContext
+    ) {
         if (from == to) return;
         assert(from < to);
         this.rows.push(new SystemRow(voice.content.slice(from, to), maxW, ctx));
@@ -33,23 +39,23 @@ export class System {
         for (const voice of Object.values(this.voices)) {
             const ctx = new MusicContext();
 
-            // TODO: measure how much you can fit in a row and break accordingly
+            // TODO: render how much you can fit in a row and break accordingly
             // TODO: Synchronize beats / bars between voices and build systems
 
-            // TODO: measure first stave width in a smarter way than that..
+            // TODO: render first stave width in a smarter way than that..
             // best way would probably be to get rid of defaultDefaultWidth etc and append the stave symbols to the content and then render it using the default loop
             let x = Stave.defaultDefaultWidth();
             let lastI = 0;
 
             let lastBreakableX = 0;
             let lastBreakableI = 0;
-            let lastCtx = MusicContext.copy(ctx)
+            let lastCtx = ctx.createDrawingCtx();
             //let lastEmergencyBreakableI = 0;
 
             for (let i = 0; i < voice.content.length; i++) {
                 const b = voice.content[i];
-                ctx.update(voice.content, i, null);
-                b.measure(ctx);
+                ctx.update(voice.content, i);
+                b.render(ctx);
 
                 x += b.ideal;
 
@@ -64,6 +70,7 @@ export class System {
                         lastI = lastBreakableI;
                         x -= lastBreakableX;
                         x += Stave.defaultDefaultWidth();
+                        lastCtx = ctx.createDrawingCtx();
                     }
                 }
 
@@ -72,13 +79,12 @@ export class System {
 
                     lastBreakableI = i + 1;
                     lastBreakableX = x;
-                    lastCtx = MusicContext.copy(ctx)
                 }
             }
 
-            ctx.finish(null);
+            ctx.finish();
 
-            this.appendRow(voice, lastI, voice.content.length, maxW, ctx);
+            this.appendRow(voice, lastI, voice.content.length, maxW, lastCtx);
         }
 
         this.rendered = true;

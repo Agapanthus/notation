@@ -1,7 +1,7 @@
 import { BeatType } from "./beat";
 import { Drawable } from "./drawable";
 import { getGlyphAdvance } from "./fonts";
-import { MusicContext } from "./musicContext";
+import { DrawingMusicContext, MusicContext } from "./musicContext";
 import { MusicFraction } from "./musicFraction";
 import { Note } from "./note";
 import { SVGTarget } from "./svg";
@@ -64,13 +64,13 @@ export class Rest extends Drawable {
         return "rest" + fraction2name[this.duration + ""];
     }
 
-    public measure(ctx: MusicContext): void {
+    public render(ctx: MusicContext): void {
         this.spaceAddGlyph(this.restName, defaultRestPos);
-        Note.measureDots(this, this.dots);
+        Note.renderDots(this, this.dots);
         this.after = defaultRestSpacing;
     }
 
-    public draw(can: SVGTarget, ctx: MusicContext) {
+    public draw(can: SVGTarget, ctx: DrawingMusicContext) {
         let uniPoint = parseInt("E4E2", 16);
 
         if (this.duration > 0) uniPoint += 1 + Math.log2(this.duration);

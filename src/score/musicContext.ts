@@ -4,22 +4,49 @@ import { SVGTarget } from "./svg";
 import { assert } from "./util";
 
 export class MusicContext {
-    private beamgroup: BeamGroupContext | null = null;
+    private beamgroup: boolean = false;
     constructor() {}
 
-    public update(content: Drawable[], i: number, can: SVGTarget | null) {
+    public update(content: Drawable[], i: number) {
+        if (content[i] instanceof NewGroup) {
+            this.beamgroup = BeamGroupContext.shouldCreate(content, i + 1);
+        }
+    }
+
+    public finish() {}
+
+    get hasBeamgroup(): boolean {
+        return this.beamgroup;
+    }
+
+    public createDrawingCtx(): DrawingMusicContext {
+        return new DrawingMusicContext();
+    }
+
+    /*  static copy(ctx: MusicContext) {
+        const c2 = new MusicContext();
+        c2.beamgroup = ctx.beamgroup ? ctx.beamgroup.copy() : null;
+        return c2;
+    }*/
+}
+
+export class DrawingMusicContext {
+    constructor() {}
+    private beamgroup: BeamGroupContext | null = null;
+
+    public update(content: Drawable[], i: number, can: SVGTarget) {
         if (content[i] instanceof NewGroup) {
             if (this.beamgroup && can) this.drawBeams(can);
             this.beamgroup = BeamGroupContext.tryCreate(content, i + 1);
         }
     }
 
-    public finish(can: SVGTarget | null) {
-        if (this.beamgroup && can) this.drawBeams(can);
-    }
-
     get hasBeamgroup(): boolean {
         return !!this.beamgroup;
+    }
+
+    public finish(can: SVGTarget | null) {
+        if (this.beamgroup && can) this.drawBeams(can);
     }
 
     public beamgroupPush(
@@ -41,11 +68,5 @@ export class MusicContext {
         can.neutral();
         this.beamgroup?.drawBeams(can);
         can.pop();
-    }
-
-    static copy(ctx: MusicContext) {
-        const c2 = new MusicContext();
-        c2.beamgroup = ctx.beamgroup ? ctx.beamgroup.copy() : null;
-        return c2;
     }
 }

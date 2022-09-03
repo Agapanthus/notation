@@ -1,7 +1,7 @@
 import { sum } from "lodash";
 import { BeatType } from "./beat";
 import { Drawable } from "./drawable";
-import { MusicContext } from "./musicContext";
+import { DrawingMusicContext, MusicContext } from "./musicContext";
 import { Stave } from "./stave";
 import { SVGTarget } from "./svg";
 import { assert } from "./util";
@@ -65,8 +65,8 @@ export class SystemRow {
         assert(this.positions.length == this.content.length);
     }
 
-    private ctx: MusicContext;
-    constructor(content: Array<Drawable>, w: number, ctx: MusicContext) {
+    private ctx: DrawingMusicContext;
+    constructor(content: Array<Drawable>, w: number, ctx: DrawingMusicContext) {
         this.content = content;
         this.pres = this.content.map((x) => x.pre);
         this.render(w);
