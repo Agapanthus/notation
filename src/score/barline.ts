@@ -74,17 +74,19 @@ export class BarLine extends Drawable {
         return 8 * 0.125;
     }
 
-    public draw(ctx: SVGTarget, x: number, y: number, context) {
+    public draw(ctx: SVGTarget, context) {
+        let x = 0;
+
         if (this.barline == BarLineType.Single) {
-            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thin);
+            ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thin);
         } else if (this.barline == BarLineType.Final) {
-            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thin);
+            ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thin);
             x += BarLine.sep + BarLine.thin;
-            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thick);
+            ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thick);
         } else if (this.barline == BarLineType.Double) {
-            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thin);
+            ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thin);
             x += BarLine.sep + BarLine.thin;
-            ctx.drawLine(x, y + this.p1(), x, y + this.p2(), BarLine.thin);
+            ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thin);
         } else {
             assert(false, "unknown barline", this.barline);
         }

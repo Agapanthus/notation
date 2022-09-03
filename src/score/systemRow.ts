@@ -78,26 +78,32 @@ export class SystemRow {
         this.st = new Stave();
     }
 
-    public draw(can: SVGTarget, x0: number, y: number) {
+    public draw(can: SVGTarget) {
         assert(this.top <= 0);
-        y += -this.top;
+
+        can.translate(0, -this.top);
 
         const ctx = this.ctx;
-        console.log(ctx.hasBeamgroup)
 
-        x0 = this.st.draw(can, x0, y);
-        let x = x0;
+        const x0 = this.st.draw(can);
 
         for (let i = 0; i < this.content.length; i++) {
-            x = x0 + this.positions[i] + this.pres[i];
+            const x = x0 + this.positions[i] + this.pres[i];
+
+            can.push();
+            can.translate(x, 0);
+
             const c = this.content[i];
             ctx.update(this.content, i, can);
-            c.draw(can, x, y, ctx);
+            c.draw(can, ctx);
+
+            can.pop();
         }
         ctx.finish(can);
 
         assert(this.bot >= 0);
-        return y + this.bot;
+
+        can.translate(0, this.bot);
     }
 
     public get height() {

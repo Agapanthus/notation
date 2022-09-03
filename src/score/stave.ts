@@ -4,8 +4,6 @@ import { ClefType, clefType2Line, clefType2unicode } from "./clefs";
 import { getEngravingDefaults, getGlyphAdvance, lineThicknessMul, spatium2points } from "./fonts";
 import { SVGTarget } from "./svg";
 
-
-
 export class Stave {
     // i.e., 0.5 is half the size. Affects the stave and it's content.
     protected relativeSize: number = 1.0;
@@ -34,28 +32,28 @@ export class Stave {
         );
     }
 
-    public draw(ctx: SVGTarget, x: number, y: number) {
+    public draw(can: SVGTarget) {
         // TODO: dynamic width; interact with paginator
-        const w = ctx.width - x;
+        const w = can.width;
 
         for (let i = 0; i < this.numberOfLines; i++) {
-            ctx.drawLine(
-                x,
-                y + i * spatium2points * this.relativeSize,
-                x + w,
-                y + i * spatium2points * this.relativeSize,
+            can.drawLine(
+                0,
+                i * spatium2points * this.relativeSize,
+                w,
+                i * spatium2points * this.relativeSize,
                 getEngravingDefaults().staffLineThickness * lineThicknessMul
             );
         }
 
-        ctx.drawText(
-            x + Stave.clefDx * this.relativeSize,
-            y + spatium2points * this.relativeSize * clefType2Line(this.clef),
+        can.drawText(
+            Stave.clefDx * this.relativeSize,
+            spatium2points * this.relativeSize * clefType2Line(this.clef),
             clefType2unicode(this.clef)
         );
 
         return (
-            x +
+            0 +
             (getGlyphAdvance(ClefType[this.clef]) + 2 * Stave.clefDx + Stave.initialDx) *
                 this.relativeSize
         );

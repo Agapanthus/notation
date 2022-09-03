@@ -70,14 +70,14 @@ export class Rest extends Drawable {
         this.after = defaultRestSpacing;
     }
 
-    public draw(can: SVGTarget, x: number, y: number, ctx: MusicContext) {
+    public draw(can: SVGTarget, ctx: MusicContext) {
         let uniPoint = parseInt("E4E2", 16);
 
         if (this.duration > 0) uniPoint += 1 + Math.log2(this.duration);
         const w = getGlyphAdvance(this.restName);
 
-        can.drawText(x, y + defaultRestPos, String.fromCodePoint(uniPoint));
+        can.drawText(0, defaultRestPos, String.fromCodePoint(uniPoint));
 
-        Note.drawDots(can, x, y, w, 5, this.dots);
+        Note.drawDots(can, 0, 0, w, 5, this.dots);
     }
 }

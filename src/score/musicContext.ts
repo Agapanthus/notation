@@ -28,15 +28,19 @@ export class MusicContext {
         w: number,
         duration: number,
         l: number,
-        yl: number
+        yl: number,
+        can: SVGTarget
     ): void {
         assert(this.beamgroup);
-        this.beamgroup?.push(x, y, w, duration, l, yl);
+        this.beamgroup?.push(x + can.getDx, y + can.getDy, w, duration, l, yl + can.getDy);
     }
 
     public drawBeams(can: SVGTarget) {
         assert(this.beamgroup);
+        can.push();
+        can.neutral();
         this.beamgroup?.drawBeams(can);
+        can.pop();
     }
 
     static copy(ctx: MusicContext) {

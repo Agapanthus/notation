@@ -32,7 +32,7 @@ export class System {
 
         for (const voice of Object.values(this.voices)) {
             const ctx = new MusicContext();
-            
+
             // TODO: measure how much you can fit in a row and break accordingly
             // TODO: Synchronize beats / bars between voices and build systems
 
@@ -48,7 +48,7 @@ export class System {
             for (let i = 0; i < voice.content.length; i++) {
                 const b = voice.content[i];
                 ctx.update(voice.content, i, null);
-                b.measure(ctx)
+                b.measure(ctx);
 
                 x += b.ideal;
 
@@ -85,9 +85,12 @@ export class System {
 
     public draw(can: SVGTarget) {
         assert(this.rendered, "system must be rendered");
-        let y = 0.5; // TODO: 0, put margin in page layouter
+
+        // TODO: 0, put margin in page layouter
+        can.translate(0, 0.5);
         for (const row of Object.values(this.rows)) {
-            y = row.draw(can, 0, y) + interStaveSpace;
+            row.draw(can);
+            can.translate(0, interStaveSpace);
         }
     }
 

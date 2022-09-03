@@ -10,7 +10,7 @@ export abstract class Drawable extends SpacedBeat {
 
     abstract measure(ctx: MusicContext): void;
 
-    abstract draw(can: SVGTarget, x: number, y: number, ctx: MusicContext): void;
+    abstract draw(can: SVGTarget, ctx: MusicContext): void;
 }
 
 export class NewGroup extends Drawable {
@@ -18,7 +18,7 @@ export class NewGroup extends Drawable {
         super(BeatType.Empty, new MusicFraction());
     }
 
-    public draw(can: SVGTarget, x: number, y: number, ctx: MusicContext) {
+    public draw(can: SVGTarget, ctx: MusicContext) {
         // TODO
     }
 

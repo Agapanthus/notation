@@ -303,34 +303,34 @@ export class Note extends Drawable {
         return l;
     }
 
-    public draw(can: SVGTarget, x: number, y: number, ctx: MusicContext) {
+    public draw(can: SVGTarget, ctx: MusicContext) {
         const l = this.getL();
         // determine y positions
-        const yl = y + 0.125 * l;
+        const yl = 0.125 * l;
 
         // accidentals
-        Note.drawAccidentals(can, x, yl, this.accidentals);
+        Note.drawAccidentals(can, 0, yl, this.accidentals);
 
         // TODO: Support other note-head shapes!
         const noteHead = Note.getNotehead(this.duration);
         const w = getGlyphWidth(noteHead);
 
         // Ledger lines
-        Note.drawLedgerLines(can, x, y, l, w);
+        Note.drawLedgerLines(can, 0, 0, l, w);
 
         // Note head
-        can.drawText(x, yl, getSMUFLUni(noteHead));
+        can.drawText(0, yl, getSMUFLUni(noteHead));
 
         if (this.duration >= 2) {
             if (ctx.hasBeamgroup && this.duration >= 8) {
-                ctx.beamgroupPush(x, y, w, this.duration, l, yl);
+                ctx.beamgroupPush(0, 0, w, this.duration, l, yl, can);
             } else {
                 // Stem
-                Note.drawStemWithFlags(can, x, yl, l, w, this.duration);
+                Note.drawStemWithFlags(can, 0, yl, l, w, this.duration);
             }
         }
 
         // Dots
-        Note.drawDots(can, x, y, w, l, this.dots);
+        Note.drawDots(can, 0, 0, w, l, this.dots);
     }
 }
