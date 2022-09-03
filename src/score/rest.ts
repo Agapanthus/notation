@@ -1,6 +1,8 @@
-import { FlexDimension, getGlyphAdvance } from "./fonts";
+import { BeatType } from "./beat";
+import { Drawable } from "./drawable";
+import { getGlyphAdvance } from "./fonts";
 import { MusicFraction } from "./musicFraction";
-import { Note } from "./note";
+import { BeamGroupContext, Note } from "./note";
 import { SVGTarget } from "./svg";
 import { assert } from "./util";
 
@@ -35,11 +37,13 @@ export const fraction2name = {
 const defaultRestPos = 0.125 * 4;
 const defaultRestSpacing = 0.2;
 
-export class Rest {
+export class Rest extends Drawable {
     private duration = 0;
     private dots = 0;
 
     constructor(note: any) {
+        super(BeatType.Note, MusicFraction.fromDots(note.duration, note.dots));
+
         assert(note.type == "rest", "input must be a rest");
 
         this.duration = note.duration;
@@ -59,15 +63,13 @@ export class Rest {
         return "rest" + fraction2name[this.duration + ""];
     }
 
-    public measure(drawBeams: boolean): FlexDimension {
-        let d = new FlexDimension();
-        d.addGlyph(this.restName, defaultRestPos);
-        Note.measureDots(this.dots, d);
-        d.ideal += defaultRestSpacing;
-        return d;
+    public measure(drawBeams: boolean): void {
+        this.spaceAddGlyph(this.restName, defaultRestPos);
+        Note.measureDots(this, this.dots);
+        this.after = defaultRestSpacing;
     }
 
-    public draw(ctx: SVGTarget, x: number, y: number) {
+    public draw(ctx: SVGTarget, x: number, y: number, g: BeamGroupContext | null) {
         let uniPoint = parseInt("E4E2", 16);
 
         if (this.duration > 0) uniPoint += 1 + Math.log2(this.duration);

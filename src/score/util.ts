@@ -88,7 +88,6 @@ export function average(arr: number[]): number {
     return res / arr.length;
 }
 
-
 export function gcd(x: number, y: number): number {
     assert(typeof x === "number" || typeof y === "number");
     x = Math.abs(x);
@@ -99,4 +98,8 @@ export function gcd(x: number, y: number): number {
         x = t;
     }
     return x;
+}
+
+export function defined(x: any): boolean {
+    return typeof x !== "undefined";
 }

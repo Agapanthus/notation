@@ -14,16 +14,10 @@ export class System {
     constructor(private voices: Voice[]) {}
     private rendered = false;
 
-    private appendRow(
-        voice: Voice,
-        beats: SystemBeatSpacing[],
-        from: number,
-        to: number,
-        maxW: number
-    ) {
+    private appendRow(voice: Voice, from: number, to: number, maxW: number) {
         if (from == to) return;
         assert(from < to);
-        this.rows.push(new SystemRow(voice.content.slice(from, to), beats.slice(from, to), maxW));
+        this.rows.push(new SystemRow(voice.content.slice(from, to), maxW));
         this.fullHeight += this.rows[this.rows.length - 1].height + interStaveSpace;
     }
 
@@ -36,7 +30,7 @@ export class System {
         assert(this.rows.length == 0, "render must be called at most once");
 
         for (const voice of Object.values(this.voices)) {
-            const beats: SystemBeatSpacing[] = voice.collect();
+            voice.measure();
 
             // TODO: measure how much you can fit in a row and break accordingly
             // TODO: Synchronize beats / bars between voices and build systems
@@ -50,8 +44,8 @@ export class System {
             let lastBreakableI = 0;
             //let lastEmergencyBreakableI = 0;
 
-            for (let i = 0; i < beats.length; i++) {
-                const b = beats[i];
+            for (let i = 0; i < voice.content.length; i++) {
+                const b = voice.content[i];
                 x += b.ideal;
 
                 if (x > maxWidth) {
@@ -61,7 +55,7 @@ export class System {
                     } else {
                         console.log("break", i, x);
                         assert(lastI < lastBreakableI);
-                        this.appendRow(voice, beats, lastI, lastBreakableI, maxW);
+                        this.appendRow(voice, lastI, lastBreakableI, maxW);
                         lastI = lastBreakableI;
                         x -= lastBreakableX;
 
@@ -77,7 +71,7 @@ export class System {
                 }
             }
 
-            this.appendRow(voice, beats, lastI, beats.length, maxW);
+            this.appendRow(voice, lastI, voice.content.length, maxW);
         }
 
         this.rendered = true;
@@ -85,7 +79,7 @@ export class System {
 
     public draw(ctx: SVGTarget) {
         assert(this.rendered, "system must be rendered");
-        let y = .5; // TODO: 0, put margin in page layouter
+        let y = 0.5; // TODO: 0, put margin in page layouter
         for (const row of Object.values(this.rows)) {
             y = row.draw(ctx, 0, y) + interStaveSpace;
         }
@@ -93,6 +87,6 @@ export class System {
 
     get height() {
         assert(this.rendered, "system must be rendered");
-        return this.fullHeight + .5; // TODO: + 0
+        return this.fullHeight + 0.5; // TODO: + 0
     }
 }

@@ -1,15 +1,9 @@
 import { accidentalEffects } from "./accidental";
-import {
-    BeatType,
-    newEmptySystemBeatSpacing,
-    NewGroup,
-    SystemBeatSpacing,
-    VoiceElement,
-} from "./beat";
+import { BarLine, barLine2enum } from "./barline";
+import { Drawable, NewGroup } from "./drawable";
 import { BeamGroupContext, Note, symbolicNoteDurations } from "./note";
 import { Rest, restDurations } from "./rest";
 import { ScoreTraverser } from "./scoreTraverser";
-import { BarLine, barLine2enum } from "./stave";
 import { assert } from "./util";
 
 const inOctavePitch = {
@@ -39,7 +33,7 @@ export class Voice {
     private durationD: number = 0;
     private octave: number = 5;
 
-    public content: Array<VoiceElement> = [new NewGroup()];
+    public content: Array<Drawable> = [new NewGroup()];
 
     constructor(private name: string) {}
 
@@ -189,50 +183,20 @@ export class Voice {
     }
 
     // render width and so on for every element
-    public collect(): SystemBeatSpacing[] {
+    public measure() {
         // TODO:
         // get the width and time-length of every element and map the objects to beats, so you can synchronize multiple voices
 
         // TODO: adjust top and bottom based on stave itself! (otherwise, things can overlap if notes are only in the upper part etc...)
 
-        const beats: SystemBeatSpacing[] = [];
-
         let hasG = false;
         for (let i = 0; i < this.content.length; i++) {
             const c = this.content[i];
 
-            // previous beat
-            // const p = beats[beats.length - 1];
-
-            if (c instanceof Note || c instanceof Rest) {
-                const m = c.measure(hasG);
-                beats.push({
-                    width: m.min,
-                    ideal: m.ideal,
-                    pre: m.pre,
-                    len: c.beats().num, //c.beats().add(p.beat).simplify(),
-                    type: BeatType.Normal,
-                    top: m.top,
-                    bot: m.bot,
-                });
-            } else if (c instanceof BarLine) {
-                beats.push({
-                    width: c.width(),
-                    ideal: c.ideal(),
-                    pre: 0,
-                    len: 0,
-                    type: BeatType.Bar,
-                    top: 0,
-                    bot: 0,
-                });
-            } else if (c instanceof NewGroup) {
-                beats.push(newEmptySystemBeatSpacing());
+            if (c instanceof NewGroup) {
                 hasG = BeamGroupContext.shouldCreate(this.content, i + 1);
-            } else {
-                assert(false, "unknown type", c);
             }
+            c.measure(hasG);
         }
-
-        return beats;
     }
 }
