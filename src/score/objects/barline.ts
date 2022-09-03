@@ -54,13 +54,15 @@ export class BarLine extends Drawable {
 
     static thin = getEngravingDefaults().thinBarlineThickness * lineThicknessMul;
     static thick = getEngravingDefaults().thickBarlineThickness * lineThicknessMul * 1.5; // 1.5 because i like it
-    static sep = getEngravingDefaults().barlineSeparation * spatium2points;
+    static sep = getEngravingDefaults().barlineSeparation * spatium2points * 0.6;
 
     private getWidth(): number {
         if (this.barline == BarLineType.Single) {
             return BarLine.thin;
         } else if (this.barline == BarLineType.Final) {
             return BarLine.thin + BarLine.sep + BarLine.thick;
+        } else if (this.barline == BarLineType.Double) {
+            return BarLine.thin + BarLine.sep + BarLine.thin;
         } else {
             assert(false, "unknown barline", this.barline);
             return 0;
@@ -81,7 +83,7 @@ export class BarLine extends Drawable {
             ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thin);
         } else if (this.barline == BarLineType.Final) {
             ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thin);
-            x += BarLine.sep + BarLine.thin;
+            x += BarLine.sep + BarLine.thin + BarLine.thick/2;
             ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thick);
         } else if (this.barline == BarLineType.Double) {
             ctx.drawLine(x, this.p1(), x, this.p2(), BarLine.thin);
